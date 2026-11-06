@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --hoyne-dark: #140f0b;
+    --hoyne-stout: #211813;
+    --hoyne-wood: #2f2219;
+    --hoyne-copper: #c87d32;
+    --hoyne-gold: #eab308;
+    --hoyne-amber: #d97706;
+    --hoyne-cream: #f5efe6;
+    --hoyne-parchment: #fdfbf7;
+  }
+
+  body {
+    background-color: #18110c;
+    background-image:
+      radial-gradient(circle at 50% 8%, rgba(229, 169, 60, 0.16) 0%, transparent 52%),
+      radial-gradient(circle at 15% 80%, rgba(200, 125, 50, 0.1) 0%, transparent 50%),
+      repeating-linear-gradient(
+        90deg,
+        rgba(36, 25, 17, 0.32) 0px,
+        rgba(36, 25, 17, 0.32) 110px,
+        rgba(15, 10, 7, 0.55) 110px,
+        rgba(15, 10, 7, 0.55) 113px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 235, 205, 0.015) 0px,
+        rgba(255, 235, 205, 0.015) 1px,
+        transparent 1px,
+        transparent 5px
+      ),
+      linear-gradient(180deg, #211710 0%, #18110c 50%, #120c08 100%);
+    color: #f5efe6;
+    font-family: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  .bg-brewery-table {
+    background-color: #18110c;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(229, 169, 60, 0.14) 0%, transparent 60%),
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.018) 0px,
+        rgba(255, 255, 255, 0.018) 2px,
+        transparent 2px,
+        transparent 6px
+      ),
+      linear-gradient(180deg, #241911 0%, #160f0a 100%);
+  }
+
+  .copper-border {
+    border: 1px solid rgba(200, 125, 50, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 225, 180, 0.14), 0 4px 14px rgba(0, 0, 0, 0.45);
+  }
+
+  .copper-border-bright {
+    border: 1.5px solid #c87d32;
+    box-shadow: inset 0 1px 0 rgba(255, 235, 200, 0.25), 0 0 16px rgba(200, 125, 50, 0.28);
+  }
+
+  .brass-badge {
+    background: linear-gradient(135deg, #fde68a 0%, #e5a93c 48%, #b47818 100%);
+    border: 1.5px solid #fef08a;
+    color: #140f0b;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  }
+
+  /* Gold/Amber (#E5A93C to #C68B27) tactile brewhouse buttons with heavy 3D drop shadows */
+  .copper-bevel-btn {
+    background: linear-gradient(180deg, #e5a93c 0%, #d4962a 52%, #c68b27 100%);
+    border: 1.5px solid #fde68a;
+    color: #140f0b;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    box-shadow:
+      0 4px 0 #784b0d,
+      0 6px 14px rgba(0, 0, 0, 0.65),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  }
+
+  .copper-bevel-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #f3bc52 0%, #e5a93c 52%, #cf9229 100%);
+    box-shadow:
+      0 4px 0 #784b0d,
+      0 0 18px rgba(229, 169, 60, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    transform: translateY(-1px);
+  }
+
+  .copper-bevel-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow:
+      0 1px 0 #784b0d,
+      inset 0 2px 4px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Tactile Paper/Linen Physical Card Stock (#FDFBF7) */
+  .parchment-card {
+    background-color: #fdfbf7;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        rgba(139, 115, 85, 0.035) 0px,
+        rgba(139, 115, 85, 0.035) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(139, 115, 85, 0.035) 0px,
+        rgba(139, 115, 85, 0.035) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      linear-gradient(165deg, #fdfbf7 0%, #f6efe2 65%, #ede2cd 100%);
+    color: #1c140d;
+    border: none;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
+  }
+
+  .stout-panel {
+    background: linear-gradient(180deg, rgba(39, 28, 20, 0.96) 0%, rgba(21, 15, 11, 0.98) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.38);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .stainless-panel {
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.022) 0px,
+        rgba(255, 255, 255, 0.022) 2px,
+        transparent 2px,
+        transparent 6px
+      ),
+      linear-gradient(180deg, rgba(30, 27, 24, 0.96) 0%, rgba(14, 12, 10, 0.98) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    box-shadow:
+      0 8px 22px rgba(0, 0, 0, 0.65),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  /* Warm Walnut & Brass Brewery Bar Rail */
+  .conveyor-track {
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.015) 0px,
+        rgba(255, 255, 255, 0.015) 1px,
+        transparent 1px,
+        transparent 4px
+      ),
+      linear-gradient(180deg, #241810 0%, #160f0a 50%, #241810 100%);
+    border-top: 2px solid rgba(212, 175, 55, 0.45);
+    border-bottom: 2px solid rgba(212, 175, 55, 0.45);
+    box-shadow:
+      inset 0 2px 10px rgba(0, 0, 0, 0.75),
+      0 6px 16px rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* Custom sleek copper scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #140f0b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b3526;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 125, 50, 0.4);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c87d32;
+}

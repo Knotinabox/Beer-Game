@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build & compilation outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Large archive zips & local backups
+*.zip
+*.tar.gz
+
+# Test outputs, scratch scripts & temporary artifacts
+test-results/
+test_tokens/
+scratch/
+test_*.png
+test_*.html
+current_board_cards.png
+*.log
+
+# Environment & local credentials
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Operating System & Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
