@@ -28,13 +28,13 @@ Every copy of *House of Hoyne: The Brewhouse Dial Edition* comes equipped with h
 
 | Component | Quantity | Specifications & Physical Properties |
 | :--- | :---: | :--- |
-| **11.5″ Rotary Brewhouse Dial** | 1 | Dual-layer 3mm linen-finish greyboard with recessed brass portholes, 6 radial station wedges (#1–6), central Brewhouse Pantry (#7), 6 Inner Hoppers, 6 Outer Perimeter Card Shelves, and Center Ring Hot Seat. |
+| **9.25″ Rotary Brewhouse Dial** | 1 | Dual-layer 3mm linen-finish greyboard with recessed brass portholes, 6 radial station wedges (#1–6), central Brewhouse Pantry (#7), 6 Inner Hoppers, and 6 Outer Perimeter Card Shelves. |
 | **Player Assembly Line Mats** | 6 | 12″ × 4.5″ dual-layer punchboards featuring 5 distinct operational columns with recessed token detents and card-tuck gutters. Supports 1 to 6 players. |
 | **Wooden Brewer Meeples** | 6 | 38mm × 38mm × 10mm custom silk-screened hardwood worker meeples in 6 distinct player colors (*Pilsner Gold, Cascade Green, Dark Matter Brown, Belgian Red, Solstice Violet, Alpine Cream*). |
 | **Tactile Wooden Ingredient Tokens** | 72 | 100% FSC-certified hardwood tokens in 6 distinct taxonomy shapes and colors (20 Grain, 16 Hops, 12 Yeast, 8 Fruit, 8 Spices, 8 Chocolate). Closed-loop supply pool. |
 | **Craft Beer Recipe Cards** | 57 | Standard Poker (2.5″ × 3.5″), 310gsm German black-core linen cards across 3 Tiers (24 Tier 1 Core Crushers, 27 Tier 2 Showstoppers, 6 Tier 3 Seasonals). |
-| **Dedicated Equipment Cards** | 15 | Standard Poker (2.5″ × 3.5″), Station #1 Market Deck. Permanent hardware infrastructure with printed storage detents and cost-reduction badges. |
-| **Dedicated Staff Cards** | 15 | Standard Poker (2.5″ × 3.5″), Station #2 Market Deck. Dedicated brewery floor personnel with active drafting and spent-token recovery perks. |
+| **Dedicated Equipment Cards** | 20 | Standard Poker (2.5″ × 3.5″), Station #1 Market Deck. Permanent hardware infrastructure with printed storage detents and cost-reduction badges. |
+| **Dedicated Staff Cards** | 20 | Standard Poker (2.5″ × 3.5″), Station #2 Market Deck. Dedicated brewery floor personnel with active drafting and spent-token recovery perks. |
 | **Mixer Pack Bounty Cards** | 4 | Tarot-Sized (2.75″ × 4.75″) heavy cardstock public race bounties (*In Good Time, Four Fine Friends, Hello Sunshine, Hello Darkness*). |
 | **First Brewer Marker** | 1 | Embossed solid brass steam whistle marker. |
 | **Production Pad & Rulebook** | 1 | Double-sided 50-sheet scoresheet pad and publication-grade technical rulebook. |
@@ -74,7 +74,7 @@ flowchart TD
 ```
 
 ### Step 1: Central Rotary Dial & Hoppers
-1. Lay the **11.5″ Rotary Brewhouse Dial** flat in the center of the table.
+1. Lay the **9.25″ Rotary Brewhouse Dial** flat in the center of the table.
 2. Sort the **72 Tactile Wooden Ingredient Tokens** by type and deposit them directly into their matching recessed **Inner Hoppers**:
    - **Station #1 (Chocolate)**: 8 Roasted Dark Malt Rectangles (Cocoa Brown)
    - **Station #2 (Spices)**: 8 Winter Spice Cubes (Crimson Red)
@@ -175,7 +175,7 @@ sequenceDiagram
     participant Catwalk as Phase 2: Catwalk Placement
     participant Commitment as Phase 3: Station Commitment
 
-    Note over Pipeline: Simultaneous Conveyor Slide (Right to Left)
+    Note over Pipeline: Simultaneous Conveyor Slide (Left to Right: 1 ➔ 5)
     Pipeline->>Pipeline: Zone 4 (Conditioning) advances to Zone 5 (Packaging) -> SCORES VP!
     Pipeline->>Pipeline: Zone 3 (Cellar) advances to Zone 4 (Conditioning)
     Pipeline->>Pipeline: Zone 2 (Brewhouse) advances to Zone 3 (Cellar, if space permits)
@@ -184,8 +184,8 @@ sequenceDiagram
     Note over Catwalk: Worker Deployment & Initiative Establishment
     Catwalk->>Catwalk: Players place Brewer Meeple onto Catwalk Porthole (1-7)
     Catwalk->>Catwalk: Enforce Forced Movement (cannot stay at previous station)
-    Catwalk->>Catwalk: Resolve Bumping / Eviction to Center Ring Hot Seat
-    Catwalk->>Catwalk: Shift Turn Order established: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+    Catwalk->>Catwalk: Exclusive Placement (No bumping or hot seats)
+    Catwalk->>Catwalk: Shift Turn Order established: Catwalk 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
     Note over Commitment: Sequential Execution in Catwalk Order (1-7)
     Commitment->>Commitment: Station #1 Acts -> Choose IN (Tokens) or OUT (Hardware)
@@ -198,7 +198,7 @@ sequenceDiagram
 
 ### Phase 1: The Morning Shift (Conveyor Slide & Market Refresh)
 
-All players simultaneously advance their active brewing pipeline from right to left across their Assembly Line Mat.
+All players simultaneously advance their active brewing pipeline from left to right across their 5-Zone Assembly Line Mat (1 ➔ 2 ➔ 3 ➔ 4 ➔ 5).
 
 #### Step 1.1: Advance to Packaging (Column 4 ➔ Column 5)
 - Any recipe currently in **Column 4 (Conditioning & Lagering)** advances directly into **Column 5 (Packaging & Loading Dock)**.
@@ -237,13 +237,22 @@ In initial turn order (or clockwise starting with the First Brewer Whistle), pla
 #### Rule 2.1: The Forced Movement Rule
 A brewer meeple can **never** remain at the same station for two consecutive shifts. On your turn, you must vacate your previous station and select a different Catwalk Porthole.
 
-#### Rule 2.2: Contesting, Bumping & The Center Ring "Hot Seat"
-Space on the industrial catwalks is tight. When placing your meeple:
-1. **Unoccupied Station**: If the Catwalk Porthole is empty, simply place your meeple there.
-2. **Occupied Station (Eviction)**: You may deliberately place your meeple onto a Catwalk Porthole that is already occupied by an opponent's meeple!
-3. **Hot Seat Displacement**: The displaced resident meeple is immediately knocked out and placed into the **Center Ring Hot Seat**.
-4. **Immediate Revenge Placement**: The evicted player does not wait for normal turn order—they **immediately take an out-of-turn revenge placement** to re-deploy their meeple onto any open Catwalk Porthole.
-5. **Anti-Loop Restriction**: An evicted player **cannot** immediately jump back into the exact station they were just booted from. However, they *may* evict a third player at a different station, triggering a thrilling cascade of brewhouse evictions!
+#### Rule 2.2: Exclusive Catwalk Placement & Shift Initiative
+
+In this refined operational edition of *House of Hoyne*, catwalk positions are **mutually exclusive worker spots**:
+
+1. **Exclusive Worker Spots**:
+   - Each brass **Catwalk Porthole (1–7)** accommodates exactly one Brewer Meeple.
+   - Once a player deploys to a catwalk station, that station is blocked for all other players for the rest of Phase 2.
+   - There are **no evictions, hot seats, or bumping**.
+
+2. **Standard Clockwise Phase 2 Order**:
+   - Players deploy their 1 Brewer Meeple one at a time, proceeding strictly clockwise around the table.
+   - If a station is already occupied, you must choose another open station.
+
+3. **Mandatory Movement Rule**:
+   - You must always move your Brewer Meeple to a **different station** on every shift.
+   - A player can **never** remain at the same station (including Station #7 Pantry) for two consecutive rounds!
 
 #### Rule 2.3: Establishing Shift Turn Initiative
 Once all players (from 1 up to 6) have their meeples seated on distinct Catwalk Portholes, turn order for the remainder of the shift is locked.
@@ -553,7 +562,7 @@ In Solo Mode, you compete directly against **The Phantom Brewmaster**, an automa
 
 ### Solo Turn Flow
 During Phase 2 (Catwalk Placement), roll a standard 6-sided die (or draw the top card of the Recipe Deck and inspect its printed Station affinity) to determine the Phantom's placement:
-1. **Phantom Catwalk Placement**: The Phantom deploys to the rolled station (1 to 6). If it rolls a station you occupy, **you are evicted** to the Hot Seat and must relocate!
+1. **Phantom Catwalk Placement**: The Phantom deploys to the rolled station (1 to 6). If it rolls a station you occupy, reroll until an unoccupied station is selected.
 2. **Station Denial**: In Phase 3, when the Phantom resolves:
    - If at **Station #1 or #2**, discard the face-up Equipment or Staff card to the discard pile.
    - If at **Stations #3–6**, discard that station's Recipe card to the discard pile.
@@ -586,10 +595,10 @@ Compare your final score against the Hoyne Brewing Master Guild standards:
 ### The Rotary Dial & Movement
 - **Q: Can I remain at Station #7 (Brewhouse Pantry) for two consecutive shifts?**  
   *A*: **No.** The Forced Movement Rule applies to all 7 stations. You must move to a different station every single shift.
-- **Q: If I am evicted from a station, can I evict someone else?**  
-  *A*: **Yes!** When knocked out into the Center Ring Hot Seat, you immediately take a revenge placement. You may choose an occupied station and evict that player. The only restriction is that you cannot immediately re-enter the station you were just booted from.
 - **Q: Can players share a Catwalk Porthole?**  
-  *A*: **Never.** Each porthole accommodates exactly one meeple. Contesting a space always results in an eviction.
+  *A*: **Never.** Each Catwalk Porthole accommodates exactly one Brewer Meeple. Stations are mutually exclusive; once claimed, other players must choose from the remaining open stations.
+- **Q: Is there any worker bumping or eviction?**  
+  *A*: **No.** Catwalk placement is mutually exclusive. You cannot place onto an already occupied station.
 
 ### Tokens & Upgrades
 - **Q: What happens if an Inner Hopper runs out of wooden tokens?**  

@@ -29,6 +29,7 @@ import {
   executePhase2ConveyorOperations,
 } from './engine/gameEngine';
 import { executeAITurn } from './engine/ai';
+import { VisualRulebookModal } from './components/VisualRulebookModal';
 import { RotaryBoard } from './components/RotaryBoard';
 import { MixerPackCardView } from './components/CardComponents';
 import { AssemblyLine } from './components/AssemblyLine';
@@ -619,184 +620,13 @@ function MainAppContent() {
       />
 
       {/* ===================================================================
-          RULES REFERENCE MODAL (UPDATED TO 11.5" ROTARY BREWHOUSE & WOODEN TOKENS)
+          VISUAL RULEBOOK & COMPONENT OPERATIONS MANUAL (MODERN EUROGAME FORMAT)
       =================================================================== */}
-      {showRulesModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div
-            role="dialog"
-            aria-labelledby="rules-title"
-            aria-modal="true"
-            className="stout-panel rounded-3xl max-w-3xl w-full p-6 space-y-4 border-2 border-hoyne-copper shadow-2xl max-h-[88vh] overflow-y-auto"
-          >
-            <div className="flex items-center justify-between border-b border-hoyne-copper/40 pb-3">
-              <div>
-                <span className="text-[10px] font-sans font-black uppercase tracking-widest text-amber-400">
-                  Official Tabletop Rulebook & Component Guide
-                </span>
-                <h2 id="rules-title" className="font-serif font-bold text-xl sm:text-2xl text-hoyne-cream">
-                  House of Hoyne: The Brewhouse Dial Edition
-                </h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPdfExportType('rules')}
-                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer"
-                  title="Make a PDF of the Official Rulebook"
-                >
-                  <Printer className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Make PDF</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowRulesModal(false)}
-                  className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-3.5 text-xs font-sans text-hoyne-cream/90 leading-relaxed">
-              {/* SECTION 1: OBJECTIVE */}
-              <div className="p-3.5 rounded-2xl bg-stone-900/90 border border-hoyne-copper/40 space-y-1">
-                <h3 className="font-serif font-bold text-sm text-amber-300 flex items-center gap-1.5">
-                  <Trophy className="w-4 h-4 text-amber-400" />
-                  Objective & Endgame Trigger (1–6 Players)
-                </h3>
-                <p className="text-stone-300 text-xs">
-                  Compete as rival craft brewmasters in Victoria, BC to build the most prestigious brewery. The first player to deliver their target number of completed beer batches to <strong>Zone 5 (Packaging & Loading Dock)</strong> triggers the final round!
-                  <br />
-                  <span className="text-amber-200 font-semibold">• Batch Targets:</span> 6 Players = <strong>5 Batches</strong> • 5 Players = <strong>6 Batches</strong> • 4 Players = <strong>7 Batches</strong> • 3 Players = <strong>8 Batches</strong> • 2 Players = <strong>8 Batches</strong> • 1 Player (Solo) = <strong>8 Batches</strong>.
-                </p>
-              </div>
-
-              {/* SECTION 2: THE 11.5" ROTARY BREWHOUSE DIAL */}
-              <div className="p-3.5 rounded-2xl bg-stone-900/90 border border-hoyne-copper/40 space-y-2">
-                <h3 className="font-serif font-bold text-sm text-amber-300 flex items-center gap-1.5">
-                  <Compass className="w-4 h-4 text-amber-400" />
-                  The 11.5″ Rotary Brewhouse Dial &amp; Wooden Tokens
-                </h3>
-                <p className="text-stone-300 text-xs">
-                  The centerpiece of the table is an 11.5″ industrial kettle dial featuring 7 numbered stations (6 radial stations plus the central Station #7: Brewhouse Pantry):
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[11px] font-mono">
-                  <div className="p-1.5 rounded-lg bg-stone-950/80 border border-amber-900/50 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#c48859]" />
-                    <span>#1 Chocolate (+1)</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-stone-950/80 border border-amber-900/50 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#e67e22]" />
-                    <span>#2 Spices (+1)</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-stone-950/80 border border-amber-900/50 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#9b59b6]" />
-                    <span>#3 Fruit (+1)</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-stone-950/80 border border-amber-900/50 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#f39c12]" />
-                    <span>#4 Yeast (+2)</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-stone-950/80 border border-amber-900/50 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#27ae60]" />
-                    <span>#5 Hops (+2)</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-stone-950/80 border border-amber-900/50 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#f1c40f]" />
-                    <span>#6 Grain (+2)</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-amber-950/80 border border-amber-500/60 flex items-center gap-1.5 col-span-2 sm:col-span-3 justify-center">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
-                    <span className="font-bold text-amber-200">#7 Brewhouse Pantry (Center) — Claim 1 of ANY Token • Resolves Last (#7)</span>
-                  </div>
-                </div>
-                <div className="text-stone-300 text-xs space-y-1">
-                  <div>• <strong>Inner Hoppers (1–6)</strong>: Dedicated tactile wooden ingredient token reserves.</div>
-                  <div>• <strong>Catwalk Portholes (1–7)</strong>: Precision brass meeple detents that determine shift turn initiative.</div>
-                  <div>• <strong>Outer Perimeter Shelves (1–6) & Market Segregation</strong>:
-                    <ul className="ml-4 mt-0.5 space-y-0.5 text-[11px] list-disc list-outside text-amber-200/90">
-                      <li><strong className="text-amber-300">Station #1 Market</strong>: Exclusively offers <strong>The Equipment Deck</strong> (20 unique passive hardware cards).</li>
-                      <li><strong className="text-amber-300">Station #2 Market</strong>: Exclusively offers <strong>The Staff Deck</strong> (20 unique brewery floor personnel cards).</li>
-                      <li><strong className="text-emerald-300">Stations #3–6 Markets</strong>: Exclusively offer <strong>The Beer Recipe Deck</strong> (57 craft beer recipes across 3 Tiers).</li>
-                    </ul>
-                  </div>
-                  <div>• <strong>Station #7 (Center Pantry)</strong>: The wild Brewhouse Pantry. Collect 1 of ANY ingredient token into your warehouse. Resolves last (#7) in shift turn order.</div>
-                  <div>• <strong>Mandatory Movement Rule</strong>: Just like all other stations, you must move your Brewer Meeple to a different station after every turn. You can NEVER remain at the same station (including Station #7) for consecutive shifts!</div>
-                  <div>• <strong>Contesting &amp; Eviction</strong>: When you contest an occupied catwalk space, the resident brewer meeple is knocked out into the Center Ring Hot Seat and immediately takes an out-of-turn revenge placement onto a different open catwalk station (they cannot immediately re-enter the station they were just evicted from). Once all meeples are placed, shift initiative executes strictly in numerical catwalk order (1 ➔ 7)!</div>
-                </div>
-              </div>
-
-              {/* SECTION 3: SHIFT PHASES */}
-              <div className="p-3.5 rounded-2xl bg-stone-900/90 border border-hoyne-copper/40 space-y-2">
-                <h3 className="font-serif font-bold text-sm text-amber-300 flex items-center gap-1.5">
-                  <Play className="w-4 h-4 text-amber-400" />
-                  Turn Structure: 3-Phase Shift Flow
-                </h3>
-
-                <div className="space-y-2 text-xs">
-                  <div className="p-2 rounded-xl bg-stone-950/80 border border-amber-500/30">
-                    <strong className="text-amber-300">Phase 1: The Morning Shift (Conveyor Slide)</strong>
-                    <p className="text-stone-300 text-[11.5px] mt-0.5">
-                      Batches in your brewery pipeline advance right-to-left across your 5-Zone Assembly Line:
-                      <br />1. Conditioned beer in <strong>Column 4 (Conditioning & Lagering)</strong> moves into <strong>Column 5 (Packaging & Dock)</strong>, immediately scoring Base Prestige VP + Recipe Completion Bonuses + Loading Dock triggers!
-                      <br />2. Fermenting beer in <strong>Column 3 (Fermentation Cellar)</strong> moves into <strong>Column 4 (Conditioning & Lagering)</strong> (Base cap: 1 batch).
-                      <br />3. Newly brewed wort in <strong>Column 2 (Brewhouse Kettle)</strong> moves into <strong>Column 3 (Fermentation Cellar)</strong> if cellar capacity is available (bottleneck occurs if cellar is full!).
-                    </p>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-stone-950/80 border border-amber-500/30">
-                    <strong className="text-amber-300">Phase 2: Catwalk Placement &amp; Initiative</strong>
-                    <p className="text-stone-300 text-[11.5px] mt-0.5">
-                      Deploy your Brewer Meeple to an available brass <strong>Catwalk Porthole (1–7)</strong>.
-                      Porthole numbers establish Shift Initiative Order (Porthole #1 acts first, through #7). If you place onto an occupied spot, the resident brewer is knocked out into the Center Ring Hot Seat and immediately takes an out-of-turn revenge action to place onto another open catwalk station (they cannot immediately jump back into the station they were just evicted from).
-                    </p>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-stone-950/80 border border-amber-500/30">
-                    <strong className="text-amber-300">Phase 3: Station Commitment (Choose 1 Action in Initiative Order)</strong>
-                    <p className="text-stone-300 text-[11.5px] mt-0.5">
-                      Operating in numerical Catwalk order (1 ➔ 7), each player executes their committed station action:
-                      <br />• <strong className="text-amber-300">Option A — Inner Hopper (IN) (Stations 1–6)</strong>: Harvest raw wooden tokens from the station hopper into your warehouse (e.g. +2 Grain, +2 Hops, +2 Yeast, or +1 Chocolate/Spices/Fruit).
-                      <br />• <strong className="text-emerald-300">Option B — Outer Shelf (OUT) (Stations 1–6)</strong>:
-                      <br />&nbsp;&nbsp;&ndash; <strong className="text-amber-300">Station #1 (Equipment Deck)</strong>: Spend required wooden tokens to install passive hardware infrastructure face-up beside your brewery board (e.g., storage silos with physical token slots, mash tun cost reductions, cellar pipeline kickbacks, packaging racking).
-                      <br />&nbsp;&nbsp;&ndash; <strong className="text-amber-300">Station #2 (Staff Deck)</strong>: Spend required wooden wages to hire active brewery floor personnel face-up beside your brewery board (e.g., sourcing brokers for +1 drafting yields, brew floor hustlers for spent token recovery, delivery expediters for finish bonuses).
-                      <br />&nbsp;&nbsp;&ndash; <strong className="text-emerald-300">Stations #3–6 (Beer Recipe Deck)</strong>: Spend matching wooden tokens to brew the craft recipe card directly into Zone 2 (Brewhouse Kettle).
-                      <br />• <strong className="text-amber-200">Option C — Brewhouse Pantry (Station #7)</strong>: Collect 1 wooden token of ANY ingredient (Grain, Hops, Yeast, Fruit, Spices, Chocolate) into your brewery warehouse. Resolves last (#7) in shift initiative.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 4: 5-ZONE BREWERY BOARD & UPGRADE LANES */}
-              <div className="p-3.5 rounded-2xl bg-stone-900/90 border border-hoyne-copper/40 space-y-1.5">
-                <h3 className="font-serif font-bold text-sm text-amber-300">
-                  The 5-Zone Brewery Assembly Line &amp; Dedicated Upgrade Lanes
-                </h3>
-                <p className="text-stone-300 text-xs">
-                  • <strong>Column 1: Zone 1 - Grain Warehouse</strong> — Base storage capacity (6 tokens, expandable via hardware storage silos like High-Capacity Hopper, Cryo-Hop Storage, Roasted Malt Bin, and Inventory Vaults). Sourcing brokers boost your drafting yields.
-                  <br />• <strong>Column 2: Zone 2 - Brewhouse Kettle</strong> — Mash tun and kettle for boiling new recipe batches (Base cap: 1 batch). Brewhouse equipment and mash tenders reduce token brew costs and recover spent grains, hops, or yeast.
-                  <br />• <strong>Column 3: Zone 3 - Fermentation Cellar</strong> — Jacketed fermenters conditioning active wort (Base cap: 1 batch, expandable to 2 via Glycol Jacket). Oak aging foeders, conditioning rigs, and unitanks award bonus ingredients as beers advance to Conditioning.
-                  <br />• <strong>Column 4: Zone 4 - Conditioning &amp; Lagering</strong> — Cold conditioning maturation tanks (Base cap: 1 batch). Allows delicate lagers and rich ales to reach peak flavor.
-                  <br />• <strong>Column 5: Zone 5 - Packaging &amp; Dock</strong> — Finished beer packaged into kegs &amp; cans for final VP scoring. Automated keg rackers, pallet stretch wrappers, taproom leads, and route drivers grant bonus resources upon final delivery. Delivering your target batch here triggers the final shift!
-                  <br />• <strong>Card Placement</strong>: Installed <em>Equipment Cards</em> (hardware blueprints) and <em>Staff Cards</em> (brewery personnel) remain permanently face-up alongside their respective zones to continuously trigger passive and active perks.
-                </p>
-              </div>
-
-              {/* SECTION 5: MIXER PACK BOUNTIES */}
-              <div className="p-3.5 rounded-2xl bg-stone-900/90 border border-hoyne-copper/40 space-y-1">
-                <h3 className="font-serif font-bold text-sm text-amber-300 flex items-center gap-1.5">
-                  <Package className="w-4 h-4 text-amber-400" />
-                  Hoyne Mixer Pack Bounties (Public Race)
-                </h3>
-                <p className="text-stone-300 text-xs">
-                  4 active Mixer Pack bounties are available to all players (<em>In Good Time 4 VP</em>, <em>Four Fine Friends 5 VP</em>, <em>Hello Sunshine 6 VP</em>, <em>Hello Darkness 7 VP</em>). The first brewer to deliver all 4 required recipes to Zone 4 Packaging immediately claims the bonus VP!
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <VisualRulebookModal
+        isOpen={showRulesModal}
+        onClose={() => setShowRulesModal(false)}
+        onOpenPdfExport={() => setPdfExportType('rules')}
+      />
 
       {/* ===================================================================
           GAME OVER TAPROOM FINALE MODAL
