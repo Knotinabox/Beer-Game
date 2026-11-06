@@ -624,6 +624,8 @@ function MainAppContent() {
       =================================================================== */}
       <VisualRulebookModal
         isOpen={showRulesModal}
+        gameState={gameState}
+        activePlayer={activePlayer}
         onClose={() => setShowRulesModal(false)}
         onOpenPdfExport={() => setPdfExportType('rules')}
       />

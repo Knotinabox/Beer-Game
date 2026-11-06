@@ -19,10 +19,16 @@ import {
   Package,
 } from 'lucide-react';
 import { RecipeCardView, UpgradeCardView } from './CardComponents';
+import { RotaryBoard } from './RotaryBoard';
+import { AssemblyLine } from './AssemblyLine';
+import { createInitialGameState } from '../engine/gameEngine';
+import { GameState, PlayerState } from '../engine/types';
 import { createRecipeDeck, createEquipmentDeck, createStaffDeck } from '../engine/cards';
 
 export interface VisualRulebookModalProps {
   isOpen: boolean;
+  gameState?: GameState;
+  activePlayer?: PlayerState;
   onClose: () => void;
   onOpenPdfExport?: () => void;
 }
@@ -31,9 +37,13 @@ type RulebookTab = 'dial' | 'board' | 'cards' | 'flow' | 'scoring';
 
 export const VisualRulebookModal: React.FC<VisualRulebookModalProps> = ({
   isOpen,
+  gameState,
+  activePlayer,
   onClose,
   onOpenPdfExport,
 }) => {
+  const displayGameState = gameState || createInitialGameState({ playerCount: 4 });
+  const displayActivePlayer = activePlayer || displayGameState.players[0];
   const [activeTab, setActiveTab] = useState<RulebookTab>('dial');
 
   if (!isOpen) return null;
@@ -186,102 +196,82 @@ export const VisualRulebookModal: React.FC<VisualRulebookModalProps> = ({
                 </div>
               </div>
 
-              {/* Graphic Diagram: The Rotary Dial with Visual Callouts */}
-              <div className="p-5 rounded-2xl bg-stone-950/90 border border-stone-800 space-y-5">
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  {/* Central Dial Art with Overlay Highlights */}
-                  <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-full border-4 border-amber-600/60 shadow-2xl overflow-hidden shrink-0 bg-stone-950 flex items-center justify-center">
-                    <img
-                      src="/board/brewhouse-kettle-hub.png"
-                      alt="Brewhouse Dial Artwork"
-                      className="w-full h-full object-cover opacity-85"
+              {/* Graphic Showcase: THE REAL ROTARY BOARD WITH SURROUNDING CARDS */}
+              <div className="p-5 rounded-2xl bg-stone-950/90 border border-stone-800 space-y-6">
+                <div className="flex items-center justify-between border-b border-stone-800 pb-2">
+                  <div className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5" />
+                    The Complete Rotary Brewhouse Tabletop Board
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] font-mono">
+                    <span className="text-amber-300 font-bold">• Station 1: Equipment</span>
+                    <span className="text-emerald-300 font-bold">• Station 2: Staff</span>
+                    <span className="text-cyan-300 font-bold">• Stations 3–6: Beer Recipes</span>
+                  </div>
+                </div>
+
+                {/* Real Rotary Board Component */}
+                <div className="w-full flex justify-center py-2 overflow-x-auto overflow-y-visible">
+                  <div className="w-full max-w-[620px] pointer-events-none select-none">
+                    <RotaryBoard
+                      gameState={displayGameState}
+                      activePlayer={displayActivePlayer}
+                      isWorkDay={false}
+                      onPerformRotaryAction={() => {}}
+                      onPerformCenterPantryAction={() => {}}
+                      onPerformEndOfShiftSlide={() => {}}
                     />
-                    {/* Center Station 7 Badge */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-amber-950/90 border-2 border-amber-400 flex flex-col items-center justify-center shadow-lg">
-                        <span className="text-amber-200 font-bold font-mono text-sm leading-none">#7</span>
-                        <span className="text-[8px] font-sans font-bold text-amber-300 uppercase">Pantry</span>
+                  </div>
+                </div>
+
+                {/* 4 Concentric Rings Key (Sanctuary Callout Format) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                  <div className="p-3 rounded-xl bg-stone-900 border border-amber-600/40 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-amber-500/30 text-amber-300 font-bold font-mono text-[10px] flex items-center justify-center border border-amber-400 shrink-0">
+                        1
                       </div>
+                      <div className="font-bold text-amber-300 text-xs">Inner Hoppers (1–6)</div>
                     </div>
-                    {/* Radial Station Badges Overlay */}
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-black/80 border border-amber-400 text-[10px] font-bold text-amber-200">
-                      #1 Choc
-                    </div>
-                    <div className="absolute top-1/4 right-2 px-2 py-0.5 rounded-full bg-black/80 border border-amber-400 text-[10px] font-bold text-amber-200">
-                      #2 Spice
-                    </div>
-                    <div className="absolute bottom-1/4 right-2 px-2 py-0.5 rounded-full bg-black/80 border border-amber-400 text-[10px] font-bold text-amber-200">
-                      #3 Fruit
-                    </div>
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-black/80 border border-amber-400 text-[10px] font-bold text-amber-200">
-                      #4 Yeast
-                    </div>
-                    <div className="absolute bottom-1/4 left-2 px-2 py-0.5 rounded-full bg-black/80 border border-amber-400 text-[10px] font-bold text-amber-200">
-                      #5 Hops
-                    </div>
-                    <div className="absolute top-1/4 left-2 px-2 py-0.5 rounded-full bg-black/80 border border-amber-400 text-[10px] font-bold text-amber-200">
-                      #6 Grain
-                    </div>
+                    <p className="text-[11px] text-stone-300 mt-1 leading-snug">
+                      6 ingredient token bays: <strong>Chocolate (+1)</strong>, <strong>Spices (+1)</strong>, <strong>Fruit (+1)</strong>, <strong>Yeast (+2)</strong>, <strong>Hops (+2)</strong>, <strong>Grain (+2)</strong>.
+                    </p>
                   </div>
 
-                  {/* 4 Concentric Rings Key (Sanctuary Callout Format) */}
-                  <div className="flex-1 space-y-3">
-                    <div className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Info className="w-3.5 h-3.5" />
-                      Dial Anatomy &amp; Operational Zones
+                  <div className="p-3 rounded-xl bg-stone-900 border border-cyan-600/40 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-cyan-500/30 text-cyan-300 font-bold font-mono text-[10px] flex items-center justify-center border border-cyan-400 shrink-0">
+                        2
+                      </div>
+                      <div className="font-bold text-cyan-300 text-xs">Catwalks (1–7)</div>
                     </div>
+                    <p className="text-[11px] text-stone-300 mt-1 leading-snug">
+                      Exclusive worker portholes. <strong>No bumping!</strong> Your catwalk number sets your exact turn initiative order (1 ➔ 7) in Phase 3.
+                    </p>
+                  </div>
 
-                    <div className="space-y-2.5">
-                      <div className="p-2.5 rounded-xl bg-stone-900/90 border border-amber-600/40 flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-amber-500/30 text-amber-300 font-bold font-mono text-xs flex items-center justify-center border border-amber-400 shrink-0">
-                          1
-                        </div>
-                        <div>
-                          <div className="font-bold text-amber-300 text-xs">Inner Hoppers (Stations 1–6)</div>
-                          <p className="text-[11px] text-stone-300 mt-0.5">
-                            Dedicated ingredient wells holding raw tokens: <strong>Chocolate (+1)</strong>, <strong>Spices (+1)</strong>, <strong>Fruit (+1)</strong>, <strong>Yeast (+2)</strong>, <strong>Hops (+2)</strong>, <strong>Grain (+2)</strong>.
-                          </p>
-                        </div>
+                  <div className="p-3 rounded-xl bg-stone-900 border border-emerald-600/40 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/30 text-emerald-300 font-bold font-mono text-[10px] flex items-center justify-center border border-emerald-400 shrink-0">
+                        3
                       </div>
-
-                      <div className="p-2.5 rounded-xl bg-stone-900/90 border border-cyan-600/40 flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-cyan-500/30 text-cyan-300 font-bold font-mono text-xs flex items-center justify-center border border-cyan-400 shrink-0">
-                          2
-                        </div>
-                        <div>
-                          <div className="font-bold text-cyan-300 text-xs">Catwalk Portholes (Stations 1–7)</div>
-                          <p className="text-[11px] text-stone-300 mt-0.5">
-                            Brass worker detents where brewers place meeples. <strong>Mutually exclusive (no bumping)!</strong> Your catwalk number establishes your exact turn order in Phase 3.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-stone-900/90 border border-emerald-600/40 flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/30 text-emerald-300 font-bold font-mono text-xs flex items-center justify-center border border-emerald-400 shrink-0">
-                          3
-                        </div>
-                        <div>
-                          <div className="font-bold text-emerald-300 text-xs">Perimeter Shelves (Stations 1–6) — Segregated Markets</div>
-                          <p className="text-[11px] text-stone-300 mt-0.5">
-                            <span className="text-amber-300 font-semibold">• Station 1 Shelf</span>: Equipment Machinery Deck (20 cards)
-                            <br /><span className="text-amber-300 font-semibold">• Station 2 Shelf</span>: Staff Personnel Deck (20 cards)
-                            <br /><span className="text-emerald-300 font-semibold">• Stations 3–6 Shelves</span>: Beer Recipe Cans (57 cards)
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-stone-900/90 border border-purple-600/40 flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-purple-500/30 text-purple-300 font-bold font-mono text-xs flex items-center justify-center border border-purple-400 shrink-0">
-                          4
-                        </div>
-                        <div>
-                          <div className="font-bold text-purple-300 text-xs">Brewhouse Pantry (Station #7)</div>
-                          <p className="text-[11px] text-stone-300 mt-0.5">
-                            Central wild pantry. Claim <strong>1 of ANY ingredient token</strong>. Always resolves <strong>last (#7)</strong> in shift turn order.
-                          </p>
-                        </div>
-                      </div>
+                      <div className="font-bold text-emerald-300 text-xs">Perimeter Shelves</div>
                     </div>
+                    <p className="text-[11px] text-stone-300 mt-1 leading-snug">
+                      Segregated cards around dial: <strong>#1 Equipment</strong> (top), <strong>#2 Staff</strong> (top right), and <strong>#3–6 Beer Recipes</strong> (perimeter).
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-stone-900 border border-purple-600/40 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-purple-500/30 text-purple-300 font-bold font-mono text-[10px] flex items-center justify-center border border-purple-400 shrink-0">
+                        4
+                      </div>
+                      <div className="font-bold text-purple-300 text-xs">Center Pantry (#7)</div>
+                    </div>
+                    <p className="text-[11px] text-stone-300 mt-1 leading-snug">
+                      Central wild pantry porthole. Harvest <strong>1 of ANY ingredient token</strong>. Always resolves <strong>last (#7)</strong> in shift turn order.
+                    </p>
                   </div>
                 </div>
 
@@ -337,11 +327,23 @@ export const VisualRulebookModal: React.FC<VisualRulebookModalProps> = ({
                 </p>
               </div>
 
-              {/* Mat Architecture Showcase */}
+              {/* Mat Architecture Showcase: Live Real Assembly Line */}
               <div className="p-4 rounded-2xl bg-stone-950/90 border border-stone-800 space-y-4">
-                <div className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
-                  <span>Player Mat Architecture: Hardware, Batch Tanks &amp; Staff Lanes</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">Conveyor: Left ➔ Right (1 ➔ 5)</span>
+                <div className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between border-b border-stone-800 pb-2">
+                  <span>The Live Player Brewery Board (5 Operational Zones)</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">Conveyor Throughput: Left ➔ Right (1 ➔ 5)</span>
+                </div>
+
+                {/* Real Live Assembly Line Component */}
+                <div className="w-full flex justify-center py-2 overflow-x-auto pointer-events-none select-none">
+                  <div className="w-full min-w-[700px]">
+                    <AssemblyLine
+                      gameState={displayGameState}
+                      inspectedPlayerIndex={0}
+                      onSelectPlayerIndex={() => {}}
+                      onPerformDiscardExcess={() => {}}
+                    />
+                  </div>
                 </div>
 
                 {/* 5-Zone Visual Strips with Actual Zone Graphics */}
