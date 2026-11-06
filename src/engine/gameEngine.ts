@@ -2132,11 +2132,29 @@ export function canAffordUpgrade(
   }
 
   // Dedicated equipment and staff cards require specific ingredient tokens matching the card
-  const isDedicated = upgrade.cardKind === 'equipment' || upgrade.cardKind === 'staff';
+  const isDedicatedStaff = upgrade.cardKind === 'staff' || upgrade.type === 'staff';
+  const isDedicatedEquipment = upgrade.cardKind === 'equipment' || upgrade.type === 'equipment';
+  const isDedicated = isDedicatedStaff || isDedicatedEquipment;
   if (isDedicated) {
+    if (isDedicatedStaff && chosenOption && chosenOption !== 'staff') {
+      return {
+        canAfford: false,
+        validHandCardIds: [],
+        reason: 'Staff cards must be hired into the Staff slot under the board.',
+        chosenHalf: 'staff',
+      };
+    }
+    if (isDedicatedEquipment && chosenOption && chosenOption !== 'equipment') {
+      return {
+        canAfford: false,
+        validHandCardIds: [],
+        reason: 'Equipment cards must be installed into the Equipment slot on top of the board.',
+        chosenHalf: 'equipment',
+      };
+    }
     const tokens = player.tokens || { grain: 0, hops: 0, yeast: 0, chocolate: 0, spices: 0, fruit: 0 };
     const totalTokens = Object.values(tokens).reduce((sum, n) => sum + (n || 0), 0);
-    const chosenHalf: 'equipment' | 'staff' = upgrade.cardKind === 'staff' ? 'staff' : 'equipment';
+    const chosenHalf: 'equipment' | 'staff' = isDedicatedStaff ? 'staff' : 'equipment';
     const targetZone: ZoneId = (
       chosenHalf === 'equipment'
         ? (upgrade.equipment?.targetZone ?? upgrade.targetZone ?? 1)
@@ -2558,7 +2576,11 @@ export function performInvestAction(
   if (!check.canAfford) return state;
 
   const finalInstallAs: 'equipment' | 'staff' | 'leftWing' | 'rightWing' =
-    installAs || check.chosenHalf || (upgrade.isUniversalWing ? 'leftWing' : 'equipment');
+    upgrade.cardKind === 'staff' || upgrade.type === 'staff'
+      ? 'staff'
+      : upgrade.cardKind === 'equipment' || upgrade.type === 'equipment'
+      ? 'equipment'
+      : installAs || check.chosenHalf || (upgrade.isUniversalWing ? 'leftWing' : 'equipment');
 
   // Hard safety check: ensure the location is not already occupied (1 upgrade per location)
   const targetZoneCheck: ZoneId = (
@@ -3339,22 +3361,8 @@ export function advanceTurn(state: GameState): GameState {
     endgameTriggeredByPlayerId = currentPlayer.id;
   }
 
-  // Determine next player: If someone was displaced to the Center Ring Hot Seat, they play NEXT!
-  let nextPlayerIndex: number;
-  let nextRotaryBoard = state.rotaryBoard ? { ...state.rotaryBoard } : undefined;
-
-  if (nextRotaryBoard?.hotSeatPlayerId) {
-    const hotSeatIndex = state.players.findIndex(
-      (p) => p.id === nextRotaryBoard!.hotSeatPlayerId
-    );
-    if (hotSeatIndex !== -1 && hotSeatIndex !== state.currentPlayerIndex) {
-      nextPlayerIndex = hotSeatIndex;
-    } else {
-      nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
-    }
-  } else {
-    nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
-  }
+  // Determine next player in standard clockwise rotation
+  const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
 
   const wrappingToFirstPlayer = nextPlayerIndex === 0;
   const nextTurnNumber = state.turnNumber + 1;
@@ -3421,7 +3429,7 @@ export function advanceTurn(state: GameState): GameState {
     ...state,
     players: nextPlayers,
     ingredientStations: nextStations,
-    rotaryBoard: nextRotaryBoard,
+    rotaryBoard: state.rotaryBoard,
     currentPlayerIndex: nextPlayerIndex,
     turnNumber: nextTurnNumber,
     roundNumber: nextRoundNumber,
@@ -3664,15 +3672,35 @@ export function canAffordUpgradeWithTokens(
   tokenCost: Record<IngredientTaxonomy, number>;
   chosenHalf: 'equipment' | 'staff' | 'leftWing' | 'rightWing';
 } {
+  const isDedicatedStaff = upgrade.cardKind === 'staff' || upgrade.type === 'staff';
+  const isDedicatedEquipment = upgrade.cardKind === 'equipment' || upgrade.type === 'equipment';
+
+  // Strictly enforce card type: Staff cards can ONLY be hired into Staff (bottom), and Equipment cards can ONLY be installed into Equipment (top)
+  if (isDedicatedStaff && chosenOption && chosenOption !== 'staff') {
+    return {
+      canAfford: false,
+      reason: 'Staff cards must be hired into the Staff slot under the board.',
+      tokenCost: { grain: 0, hops: 0, yeast: 0, chocolate: 0, spices: 0, fruit: 0 },
+      chosenHalf: 'staff',
+    };
+  }
+  if (isDedicatedEquipment && chosenOption && chosenOption !== 'equipment') {
+    return {
+      canAfford: false,
+      reason: 'Equipment cards must be installed into the Equipment slot on top of the board.',
+      tokenCost: { grain: 0, hops: 0, yeast: 0, chocolate: 0, spices: 0, fruit: 0 },
+      chosenHalf: 'equipment',
+    };
+  }
+
   const chosenHalf: 'equipment' | 'staff' | 'leftWing' | 'rightWing' =
-    chosenOption ||
-    (upgrade.cardKind === 'staff'
+    isDedicatedStaff
       ? 'staff'
-      : upgrade.cardKind === 'equipment'
+      : isDedicatedEquipment
       ? 'equipment'
       : upgrade.isUniversalWing
-      ? 'leftWing'
-      : 'equipment');
+      ? (chosenOption === 'rightWing' ? 'rightWing' : 'leftWing')
+      : (chosenOption || 'equipment');
   const targetZone: ZoneId = (
     chosenHalf === 'equipment'
       ? (upgrade.equipment?.targetZone ?? upgrade.targetZone ?? 1)
@@ -3681,7 +3709,7 @@ export function canAffordUpgradeWithTokens(
       : 1
   ) as ZoneId;
 
-  const isDedicatedUpgrade = upgrade.cardKind === 'equipment' || upgrade.cardKind === 'staff';
+  const isDedicatedUpgrade = isDedicatedStaff || isDedicatedEquipment;
   if (isUpgradeLocationOccupied(player, chosenHalf, targetZone)) {
     const zoneName =
       targetZone === 1
@@ -4235,24 +4263,18 @@ export function performCatwalkPlacement(
   const slot = rotaryBoard.slots[slotNumber];
   if (!slot) return state;
 
-  // 1. Forced Movement Rule: Cannot select the Catwalk of the wedge occupied on previous shift (unless in Hot Seat)
-  if (rotaryBoard.centerRingHotSeat?.playerId === player.id) {
-    if (rotaryBoard.evictedFromStation === slotNumber) {
-      return state; // Restricted from station evicted from!
-    }
-  } else if (player.lastOccupiedStation === slotNumber) {
+  // 1. Forced Movement Rule: Cannot select the Catwalk of the station occupied on previous shift
+  if (player.lastOccupiedStation === slotNumber) {
     return state; // Blocked: Must vacate previous station!
   }
 
-  // 1b. Station #7 Exclusive Rule: The only block in the center position 7 is the very middle porthole
-  if (slotNumber === 7) {
-    const existing7 = slot.catwalkOccupant;
-    if (existing7 && existing7.playerId !== player.id) {
-      return state; // Blocked: Station #7 very middle porthole is already occupied!
-    }
+  // 2. Exclusive Catwalk Placement: No player bumping!
+  // If this catwalk station is already occupied by another player, action is blocked.
+  if (slot.catwalkOccupant && slot.catwalkOccupant.playerId !== player.id) {
+    return state; // Blocked: Station is already occupied!
   }
 
-  // 2. Pick up active player's meeple from their previous location (if on board from previous shift)
+  // 3. Pick up active player's meeple from their previous location (if on board from previous shift)
   for (const s of [1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]) {
     if (rotaryBoard.slots[s].inwardOccupant?.playerId === player.id) {
       rotaryBoard.slots[s].inwardOccupant = null;
@@ -4277,62 +4299,9 @@ export function performCatwalkPlacement(
   if (rotaryBoard.centerSpaceOccupant?.playerId === player.id) {
     rotaryBoard.centerSpaceOccupant = null;
   }
-  if (rotaryBoard.centerRingHotSeat?.playerId === player.id) {
-    rotaryBoard.centerRingHotSeat = null;
-    rotaryBoard.hotSeatPlayerId = null;
-    rotaryBoard.evictedFromStation = null;
-  }
-
-  // 3. EVICTION TO HOT SEAT: If you move onto a catwalk with someone else still in one of those places
-  // (catwalk, inward hopper, outward shelf, standby bay, or Station 7 pantry detents), they go to the Hot Seat middle!
-  let pantryEvicted: RotaryOccupant | null = null;
-  if (slotNumber === 7 && rotaryBoard.pantryOccupants) {
-    for (const ing of Object.keys(rotaryBoard.pantryOccupants) as IngredientTaxonomy[]) {
-      const occ = rotaryBoard.pantryOccupants[ing];
-      if (occ && occ.playerId !== player.id) {
-        pantryEvicted = occ;
-        delete rotaryBoard.pantryOccupants[ing];
-        break;
-      }
-    }
-  }
-
-  const evictedOccupant =
-    (slot.catwalkOccupant && slot.catwalkOccupant.playerId !== player.id)
-      ? slot.catwalkOccupant
-      : (slot.inwardOccupant && slot.inwardOccupant.playerId !== player.id)
-      ? slot.inwardOccupant
-      : (slot.outwardOccupant && slot.outwardOccupant.playerId !== player.id)
-      ? slot.outwardOccupant
-      : (slot.standbyOccupant && slot.standbyOccupant.playerId !== player.id)
-      ? slot.standbyOccupant
-      : pantryEvicted;
-
-  let logs = [...state.logs];
-
-  if (evictedOccupant) {
-    if (slot.catwalkOccupant?.playerId === evictedOccupant.playerId) slot.catwalkOccupant = null;
-    if (slot.inwardOccupant?.playerId === evictedOccupant.playerId) slot.inwardOccupant = null;
-    if (slot.outwardOccupant?.playerId === evictedOccupant.playerId) slot.outwardOccupant = null;
-    if (slot.standbyOccupant?.playerId === evictedOccupant.playerId) slot.standbyOccupant = null;
-    if (rotaryBoard.centerSpaceOccupant?.playerId === evictedOccupant.playerId) rotaryBoard.centerSpaceOccupant = null;
-
-    rotaryBoard.centerRingHotSeat = {
-      playerId: evictedOccupant.playerId,
-      playerName: evictedOccupant.playerName,
-      playerColor: evictedOccupant.playerColor,
-    };
-    rotaryBoard.hotSeatPlayerId = evictedOccupant.playerId;
-    rotaryBoard.evictedFromStation = slotNumber;
-
-    logs = addLog(
-      logs,
-      state.turnNumber,
-      player,
-      'PHASE_2_CATWALK_PLACEMENT',
-      `🔥 EVICTION! ${player.name} moved onto Catwalk #${slotNumber} and knocked out ${evictedOccupant.playerName}! ${evictedOccupant.playerName} immediately takes the next action to deploy to a new catwalk!`
-    );
-  }
+  rotaryBoard.centerRingHotSeat = null;
+  rotaryBoard.hotSeatPlayerId = null;
+  rotaryBoard.evictedFromStation = null;
 
   // 4. Place active player on Catwalk
   slot.catwalkOccupant = {
@@ -4350,8 +4319,8 @@ export function performCatwalkPlacement(
     };
   }
 
-  logs = addLog(
-    logs,
+  let logs = addLog(
+    state.logs,
     state.turnNumber,
     player,
     'PHASE_2_CATWALK_PLACEMENT',
@@ -4395,23 +4364,17 @@ export function performCatwalkPlacement(
     };
   }
 
-  // Advance to next player: if someone was evicted to the Hot Seat, they act next!
-  let nextIdx: number;
-  if (rotaryBoard.hotSeatPlayerId) {
-    const hotSeatIdx = players.findIndex((p) => p.id === rotaryBoard.hotSeatPlayerId);
-    nextIdx = hotSeatIdx !== -1 ? hotSeatIdx : (state.currentPlayerIndex + 1) % players.length;
-  } else {
-    nextIdx = (state.currentPlayerIndex + 1) % players.length;
-    let safety = 0;
-    while (safety < players.length) {
-      const nextPlayer = players[nextIdx];
-      const alreadyPlaced = ([1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]).some(
-        (s) => rotaryBoard.slots[s]?.catwalkOccupant?.playerId === nextPlayer.id
-      );
-      if (!alreadyPlaced) break;
-      nextIdx = (nextIdx + 1) % players.length;
-      safety++;
-    }
+  // Advance to next player in regular clockwise order who has not placed yet
+  let nextIdx = (state.currentPlayerIndex + 1) % players.length;
+  let safety = 0;
+  while (safety < players.length) {
+    const nextPlayer = players[nextIdx];
+    const alreadyPlaced = ([1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]).some(
+      (s) => rotaryBoard.slots[s]?.catwalkOccupant?.playerId === nextPlayer.id
+    );
+    if (!alreadyPlaced) break;
+    nextIdx = (nextIdx + 1) % players.length;
+    safety++;
   }
 
   return {
@@ -4539,18 +4502,8 @@ export function performStationCommitment(
       if (!rotaryBoard.pantryOccupants) {
         rotaryBoard.pantryOccupants = {};
       }
-      const existingOccupant = rotaryBoard.pantryOccupants[effectiveIngredient];
-      if (existingOccupant && existingOccupant.playerId !== player.id) {
-        logs = addLog(
-          logs,
-          state.turnNumber,
-          player,
-          'PHASE_3_STATION_COMMITMENT',
-          `🔥 BUMPED OUT! ${player.name} moved into the ${effectiveIngredient.toUpperCase()} interior pantry location and bumped out ${existingOccupant.playerName}'s worker!`
-        );
-      }
 
-      // Meeple moves into this interior location and stays there unless bumped out!
+      // Meeple moves into this interior location
       rotaryBoard.pantryOccupants[effectiveIngredient] = {
         playerId: player.id,
         playerName: player.name,
@@ -4686,7 +4639,12 @@ export function performStationCommitment(
         centralHoppers[tax] = (centralHoppers[tax] || 0) + spent;
       });
 
-      const finalInstallAs = afford.chosenHalf;
+      const finalInstallAs: 'equipment' | 'staff' | 'leftWing' | 'rightWing' =
+        card.cardKind === 'staff' || card.type === 'staff'
+          ? 'staff'
+          : card.cardKind === 'equipment' || card.type === 'equipment'
+          ? 'equipment'
+          : afford.chosenHalf;
       const vpAward = card.bonusEndgameVp || (Object.values(card.installTokens || {}).reduce((s, n) => s + (n || 0), 0) >= 2 ? 2 : 1);
       const installedCard: UpgradeCard = {
         ...card,

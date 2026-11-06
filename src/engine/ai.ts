@@ -111,6 +111,19 @@ function scoreCardKeepValue(
   return value;
 }
 
+function getValidUpgradeOptions(card: UpgradeCard): ('equipment' | 'staff' | 'leftWing' | 'rightWing')[] {
+  if (card.isUniversalWing) {
+    return ['leftWing', 'rightWing'];
+  }
+  if (card.cardKind === 'staff' || card.type === 'staff') {
+    return ['staff'];
+  }
+  if (card.cardKind === 'equipment' || card.type === 'equipment') {
+    return ['equipment'];
+  }
+  return ['equipment', 'staff'];
+}
+
 function evaluateUpgradePriority(
   player: PlayerState,
   upgrade: UpgradeCard,
@@ -464,8 +477,7 @@ export function chooseAIAction(state: GameState): {
             else if (missing === 2) slotScore += 15;
           }
         } else if (card.deckType === 'upgrade') {
-          const options: ('equipment' | 'staff' | 'leftWing' | 'rightWing')[] =
-            card.isUniversalWing ? ['leftWing', 'rightWing'] : ['equipment', 'staff'];
+          const options = getValidUpgradeOptions(card);
           for (const opt of options) {
             const afford = canAffordUpgradeWithTokens(player, card, opt);
             if (afford.canAfford) {
@@ -565,8 +577,7 @@ export function chooseAIAction(state: GameState): {
           commitment = 'outward';
         }
       } else if (card.deckType === 'upgrade') {
-        const options: ('equipment' | 'staff' | 'leftWing' | 'rightWing')[] =
-          card.isUniversalWing ? ['leftWing', 'rightWing'] : ['equipment', 'staff'];
+        const options = getValidUpgradeOptions(card);
         for (const opt of options) {
           const afford = canAffordUpgradeWithTokens(player, card, opt);
           if (afford.canAfford) {
@@ -593,10 +604,6 @@ export function chooseAIAction(state: GameState): {
     // 0. If 11.5" Rotary Board is active, execute Rotary Catwalk Action (Tokens vs Cards)
     if (state.rotaryBoard) {
       const slots = state.rotaryBoard.slots;
-      const restrictedStation =
-        state.rotaryBoard.centerRingHotSeat?.playerId === player.id
-          ? state.rotaryBoard.evictedFromStation
-          : null;
       const currentStandbyBay = Object.values(slots).find(
         (sl) => sl.standbyOccupant?.playerId === player.id
       )?.slotNumber;
@@ -607,8 +614,7 @@ export function chooseAIAction(state: GameState): {
 
       for (let s = 1; s <= 6; s++) {
         const slotNum = s as RotarySlotNumber;
-        if (slotNum === restrictedStation) continue; // Single Eviction Restriction!
-        if (slotNum === currentStandbyBay && !state.rotaryBoard.centerRingHotSeat) continue; // Mandatory departure!
+        if (slotNum === currentStandbyBay) continue; // Mandatory departure!
 
         const slot = slots[slotNum];
         const card = slot?.outerCard;
@@ -624,8 +630,7 @@ export function chooseAIAction(state: GameState): {
             }
           }
         } else if (card.deckType === 'upgrade') {
-          const options: ('equipment' | 'staff' | 'leftWing' | 'rightWing')[] =
-            card.isUniversalWing ? ['leftWing', 'rightWing'] : ['equipment', 'staff'];
+          const options = getValidUpgradeOptions(card);
           for (const opt of options) {
             const afford = canAffordUpgradeWithTokens(player, card, opt);
             if (afford.canAfford) {
@@ -685,14 +690,7 @@ export function chooseAIAction(state: GameState): {
             ingredientWeights[tax] = (ingredientWeights[tax] || 0) + closenessMultiplier * valueMultiplier;
           }
         } else if (card.deckType === 'upgrade') {
-          const options: ('equipment' | 'staff' | 'leftWing' | 'rightWing')[] =
-            card.isUniversalWing
-              ? ['leftWing', 'rightWing']
-              : card.cardKind === 'staff'
-              ? ['staff']
-              : card.cardKind === 'equipment'
-              ? ['equipment']
-              : ['equipment', 'staff'];
+          const options = getValidUpgradeOptions(card);
           const hasAvailableSlot = options.some((opt) => {
             const targetZone = (
               opt === 'equipment'
@@ -720,8 +718,7 @@ export function chooseAIAction(state: GameState): {
 
       for (let s = 1; s <= 6; s++) {
         const slotNum = s as RotarySlotNumber;
-        if (slotNum === restrictedStation) continue; // Single Eviction Restriction!
-        if (slotNum === currentStandbyBay && !state.rotaryBoard.centerRingHotSeat) continue; // Mandatory departure!
+        if (slotNum === currentStandbyBay) continue; // Mandatory departure!
 
         const slot = slots[slotNum];
         const ing = slot.ingredient;
@@ -739,8 +736,7 @@ export function chooseAIAction(state: GameState): {
       if (bestTokenSlot === null) {
         const priorityOrder: RotarySlotNumber[] = [6, 5, 4, 1, 2, 3];
         for (const slotNum of priorityOrder) {
-          if (slotNum === restrictedStation) continue;
-          if (slotNum === currentStandbyBay && !state.rotaryBoard.centerRingHotSeat) continue;
+          if (slotNum === currentStandbyBay) continue;
           bestTokenSlot = slotNum;
           break;
         }
@@ -803,8 +799,7 @@ export function chooseAIAction(state: GameState): {
         }
       } else if (card.deckType === 'upgrade') {
         if (ownedUpgrades < 10 && !state.isFinalRound) {
-          const options: ('equipment' | 'staff' | 'leftWing' | 'rightWing')[] =
-            card.isUniversalWing ? ['leftWing', 'rightWing'] : ['equipment', 'staff'];
+          const options = getValidUpgradeOptions(card);
 
           for (const opt of options) {
             const check = canAffordUpgrade(player, card, undefined, opt);

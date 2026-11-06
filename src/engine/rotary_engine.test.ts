@@ -520,7 +520,7 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
     expect(state.winnerIds).toContain(p1.id);
   });
 
-  it('Hot Seat Eviction Rule: moving onto a catwalk with someone else in catwalk, inward hopper, or outward shelf evicts them to the Hot Seat', () => {
+  it('No Player Bumping Rule: placing onto an already occupied catwalk is blocked and play proceeds in proper order', () => {
     let state = createInitialGameState({ playerCount: 3 });
     const p1 = state.players[0];
     const p2 = state.players[1];
@@ -531,33 +531,31 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
     expect(state.rotaryBoard!.slots[5].catwalkOccupant?.playerId).toBe(p1.id);
     expect(state.currentPlayerIndex).toBe(1); // Player 2's turn
 
-    // Player 2 moves onto Catwalk 5!
-    // Player 1 is evicted into the Center Ring Hot Seat!
-    state = performCatwalkPlacement(state, 5);
-    expect(state.rotaryBoard!.slots[5].catwalkOccupant?.playerId).toBe(p2.id);
-    expect(state.rotaryBoard!.centerRingHotSeat?.playerId).toBe(p1.id);
-    expect(state.rotaryBoard!.hotSeatPlayerId).toBe(p1.id);
-    expect(state.rotaryBoard!.evictedFromStation).toBe(5);
-
-    // Evicted Player 1 acts immediately next from the Hot Seat!
-    expect(state.currentPlayerIndex).toBe(0);
-
-    // Player 1 cannot pick Station 5 (evicted from station)
-    const blockedP1 = performCatwalkPlacement(state, 5);
-    expect(blockedP1).toBe(state);
-
-    // Player 1 chooses Catwalk 2 from the Hot Seat
-    state = performCatwalkPlacement(state, 2);
-    expect(state.rotaryBoard!.slots[2].catwalkOccupant?.playerId).toBe(p1.id);
-    // Hot seat cleared!
+    // Player 2 attempts to move onto Catwalk 5!
+    // Bumping is removed: Player 2 is blocked, state returned unchanged!
+    const blockedP2 = performCatwalkPlacement(state, 5);
+    expect(blockedP2).toBe(state);
+    expect(state.rotaryBoard!.slots[5].catwalkOccupant?.playerId).toBe(p1.id);
     expect(state.rotaryBoard!.centerRingHotSeat).toBeNull();
-    expect(state.rotaryBoard!.hotSeatPlayerId).toBeNull();
 
-    // Now Player 3 takes their placement turn
+    // Player 2 chooses open Catwalk 2 instead:
+    state = performCatwalkPlacement(state, 2);
+    expect(state.rotaryBoard!.slots[2].catwalkOccupant?.playerId).toBe(p2.id);
+
+    // Turn proceeds in proper clockwise order to Player 3:
     expect(state.currentPlayerIndex).toBe(2);
+
+    // Player 3 chooses Catwalk 4:
+    state = performCatwalkPlacement(state, 4);
+    expect(state.rotaryBoard!.slots[4].catwalkOccupant?.playerId).toBe(p3.id);
+
+    // All 3 players have placed! Initiative order is established 1 -> 7 (Catwalk 2 [p2] -> Catwalk 4 [p3] -> Catwalk 5 [p1]):
+    expect(state.phase).toBe('PHASE_3_STATION_COMMITMENT');
+    expect(state.rotaryBoard!.turnOrder).toEqual([p2.id, p3.id, p1.id]);
+    expect(state.players[state.currentPlayerIndex].id).toBe(p2.id); // Catwalk 2 goes first!
   });
 
-  it('Persistent Meeple Locations: meeples persist in hoppers/shelves into next shift and evict to Hot Seat if catwalk taken', () => {
+  it('Persistent Meeple Locations: meeples persist in hoppers/shelves into next shift and players place without bumping', () => {
     let state = createInitialGameState({ playerCount: 2 });
     const p1 = state.players[0];
     const p2 = state.players[1];
@@ -583,20 +581,17 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
     expect(state.rotaryBoard!.slots[1].inwardOccupant?.playerId).toBe(p1.id);
     expect(state.rotaryBoard!.slots[3].inwardOccupant?.playerId).toBe(p2.id);
 
-    // Player 1 has initiative (Station 1 is lowest).
-    // Player 1 chooses Catwalk 3 (where Player 2 is still resting in the Inner Hopper)!
-    // Player 1's own meeple is picked up from Hopper 1 and placed on Catwalk 3.
-    // Player 2 is evicted from Hopper 3 into the Center Ring Hot Seat!
-    state = performCatwalkPlacement(state, 3);
+    // Player 1 has initiative (Station 1 was lowest).
+    // Player 1 chooses Catwalk 4.
+    // Player 1's meeple is picked up from Hopper 1 and placed on Catwalk 4.
+    state = performCatwalkPlacement(state, 4);
 
     expect(state.rotaryBoard!.slots[1].inwardOccupant).toBeNull(); // Player 1 picked up from Hopper 1
-    expect(state.rotaryBoard!.slots[3].catwalkOccupant?.playerId).toBe(p1.id); // Player 1 now on Catwalk 3
-    expect(state.rotaryBoard!.slots[3].inwardOccupant).toBeNull(); // Player 2 vacated from Hopper 3
-    expect(state.rotaryBoard!.centerRingHotSeat?.playerId).toBe(p2.id); // Player 2 evicted to Hot Seat!
-    expect(state.rotaryBoard!.hotSeatPlayerId).toBe(p2.id);
-    expect(state.rotaryBoard!.evictedFromStation).toBe(3);
+    expect(state.rotaryBoard!.slots[4].catwalkOccupant?.playerId).toBe(p1.id); // Player 1 now on Catwalk 4
+    expect(state.rotaryBoard!.slots[3].inwardOccupant?.playerId).toBe(p2.id); // Player 2 still safely in Hopper 3
+    expect(state.rotaryBoard!.centerRingHotSeat).toBeNull(); // No eviction!
 
-    // Evicted Player 2 gets immediate revenge action from the Hot Seat!
+    // Turn proceeds in proper order to Player 2:
     expect(state.players[state.currentPlayerIndex].id).toBe(p2.id);
   });
 
@@ -795,7 +790,7 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
     expect(blockedState.rotaryBoard!.centerRingHotSeat).toBeNull();
   });
 
-  it('Station #7: Meeple moves into chosen interior pantry location and stays unless bumped out or redeployed', () => {
+  it('Station #7: Meeple moves into chosen interior pantry location and redeploys without bumping', () => {
     let state = createInitialGameState({ playerCount: 3 });
     const p0 = state.players[0];
     const p1 = state.players[1];
@@ -817,32 +812,32 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
     expect(state.rotaryBoard!.pantryOccupants?.grain?.playerId).toBe(p0.id);
     expect(state.rotaryBoard!.slots[7].catwalkOccupant).toBeNull();
 
-    // Shift 2 starts: p1 deploys to Station 7 while p0 is still resting in Station 7's interior pantry.
-    // Rule: Contesting Station 7 bumps the resident pantry worker to the Center Ring Hot Seat!
+    // Shift 2 starts: p0 was in pantry. In Phase 2, p0 deploys to Catwalk 3.
     state.phase = 'PHASE_2_CATWALK_PLACEMENT';
-    state.currentPlayerIndex = 1; // p1's turn
+    state.currentPlayerIndex = 0; // p0's turn
+    state = performCatwalkPlacement(state, 3);
+    expect(state.rotaryBoard!.slots[3].catwalkOccupant?.playerId).toBe(p0.id);
+    // p0 picked up from pantry
+    expect(state.rotaryBoard!.pantryOccupants?.grain).toBeUndefined();
+
+    // p1 deploys to Station 7
+    expect(state.currentPlayerIndex).toBe(1);
     state = performCatwalkPlacement(state, 7);
     expect(state.rotaryBoard!.slots[7].catwalkOccupant?.playerId).toBe(p1.id);
 
-    // p0 is evicted from the pantry directly into the Center Ring Hot Seat!
-    expect(state.rotaryBoard!.centerRingHotSeat?.playerId).toBe(p0.id);
-    expect(state.rotaryBoard!.pantryOccupants?.grain).toBeUndefined();
-    expect(state.logs.some((l) => l.message.includes('EVICTION') || l.message.includes('knocked out'))).toBe(true);
-
-    // p0 takes immediate revenge placement from Hot Seat to Station 3
-    state = performCatwalkPlacement(state, 3);
-    expect(state.rotaryBoard!.centerRingHotSeat).toBeNull();
-    expect(state.rotaryBoard!.slots[3].catwalkOccupant?.playerId).toBe(p0.id);
-
     // p2 deploys to Station 4
+    expect(state.currentPlayerIndex).toBe(2);
     state = performCatwalkPlacement(state, 4);
+    expect(state.rotaryBoard!.slots[4].catwalkOccupant?.playerId).toBe(p2.id);
 
-    // In Phase 3: p1 at Station 7 commits and selects 'grain'
+    // In Phase 3: initiative resolves 3 (p0) -> 4 (p2) -> 7 (p1)
+    expect(state.phase).toBe('PHASE_3_STATION_COMMITMENT');
+    expect(state.rotaryBoard!.turnOrder).toEqual([p0.id, p2.id, p1.id]);
     state = performStationCommitment(state, 3, 'inward');
     state = performStationCommitment(state, 4, 'inward');
     state = performCenterPantryAction(state, 'grain');
 
-    // p1 now occupies 'grain' interior location, and p0's meeple is at Station 3 (no duplicate meeple left behind!)
+    // p1 now occupies 'grain' interior location, and p0's meeple is at Station 3
     expect(state.rotaryBoard!.pantryOccupants?.grain?.playerId).toBe(p1.id);
     expect(state.rotaryBoard!.slots[3].inwardOccupant?.playerId).toBe(p0.id);
   });

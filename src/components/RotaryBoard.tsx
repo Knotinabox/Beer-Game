@@ -236,9 +236,9 @@ export const RotaryBoard: React.FC<RotaryBoardProps> = ({
 }) => {
   const rotary = gameState.rotaryBoard;
   const { inspectCard } = useCardInspector();
-  const [showCADOverlay, setShowCADOverlay] = useState<boolean>(false);
-  const [is1to1Scale, setIs1to1Scale] = useState<boolean>(true);
-  const [cardLayout, setCardLayout] = useState<'side-ledger' | 'bottom-tray'>('side-ledger');
+  const showCADOverlay = false;
+  const is1to1Scale = true;
+  const cardLayout = 'side-ledger';
   const [hoveredSlot, setHoveredSlot] = useState<RotarySlotNumber | null>(null);
   const [hoveredAction, setHoveredAction] = useState<RotaryCatwalkAction | null>(null);
   const [evictionToast, setEvictionToast] = useState<string | null>(null);
@@ -435,83 +435,6 @@ export const RotaryBoard: React.FC<RotaryBoardProps> = ({
 
   return (
     <div className="h-full flex flex-col justify-between font-sans select-none flex-1">
-      {/* =====================================================================
-          CONTROLS: CAD DIMENSION TOGGLE & SHIFT SLIDE
-          ===================================================================== */}
-      <div className="flex items-center justify-between gap-2 px-1 py-1 shrink-0">
-        <span className="font-display font-black text-xs uppercase tracking-wider text-amber-200">
-          Brewhouse Dial
-        </span>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Side Ledger vs Bottom Tray Layout Toggle */}
-          <button
-            type="button"
-            onClick={() => setCardLayout((prev) => (prev === 'side-ledger' ? 'bottom-tray' : 'side-ledger'))}
-            className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer ${
-              cardLayout === 'side-ledger'
-                ? 'bg-purple-950/90 border-purple-400 text-purple-200'
-                : 'bg-stone-900 border-stone-700 text-stone-300 hover:text-white'
-            }`}
-            title="Toggle between Side Ledger (ingredients running down 3.5″ edge) and Bottom Tray layout"
-          >
-            <Columns2 className="w-3 h-3 text-purple-400" />
-            <span>{cardLayout === 'side-ledger' ? 'Side Ledger' : 'Bottom Tray'}</span>
-          </button>
-
-          {/* 1:1 True Physical Scale Toggle */}
-          <button
-            type="button"
-            onClick={() => setIs1to1Scale(!is1to1Scale)}
-            className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer ${
-              is1to1Scale
-                ? 'bg-amber-950/90 border-amber-400 text-amber-200'
-                : 'bg-stone-900 border-stone-700 text-stone-300 hover:text-white'
-            }`}
-            title="Toggle between True 1:1 Physical Scale (2.25″ × 3.5″ on 9.25″ Round Board) and Enlarged Display Scale"
-          >
-            <Scale className="w-3 h-3 text-amber-400" />
-            <span>{is1to1Scale ? '1:1 Scale (9.25″ Board)' : 'Scale: Enlarged'}</span>
-          </button>
-
-          {/* CAD Engineering Overlay Toggle */}
-          <button
-            type="button"
-            onClick={() => setShowCADOverlay(!showCADOverlay)}
-            className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer ${
-              showCADOverlay
-                ? 'bg-cyan-950 border-cyan-400 text-cyan-200'
-                : 'bg-stone-900 border-stone-700 text-stone-300 hover:text-white'
-            }`}
-            title="Toggle Engineering CAD Dimensions, Radii, and Detent Callouts"
-          >
-            <Compass className="w-3 h-3" />
-            <span>{showCADOverlay ? 'CAD: ON' : 'CAD: OFF'}</span>
-          </button>
-
-          {/* End-of-Shift Slide Button */}
-          {onPerformEndOfShiftSlide && (
-            <button
-              type="button"
-              disabled={!isWorkDay || isHumanWarehouseOverCap}
-              onClick={onPerformEndOfShiftSlide}
-              className={`px-2.5 py-1 rounded-lg border text-[11px] font-display font-bold uppercase tracking-wider flex items-center gap-1 transition-all shadow-sm ${
-                isWorkDay && !isHumanWarehouseOverCap
-                  ? 'copper-bevel-btn cursor-pointer'
-                  : 'bg-stone-900 border-stone-800 text-stone-500 cursor-not-allowed opacity-60'
-              }`}
-              title={
-                isHumanWarehouseOverCap
-                  ? `Action Required: Return ${humanExcessTokens} excess token(s) in warehouse before shift slide`
-                  : 'Slide all wing workers into Center Bays and reset round turn priority'
-              }
-            >
-              <RotateCw className="w-3 h-3" />
-              <span>Shift Slide ({totalWingMeeples})</span>
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* Eviction Restriction Toast */}
       {evictionToast && (
@@ -867,7 +790,7 @@ export const RotaryBoard: React.FC<RotaryBoardProps> = ({
                     <WoodenTokenPieceSVG type={def.ingredient} x={0} y={0} size={0.24} />
                   </g>
 
-                  {/* Meeple resting on this interior location (stays here unless bumped out!) */}
+                  {/* Meeple resting on this interior location */}
                   {hasPantryMeepleHere && (
                     <g>
                       <BrewerMeepleInDial
@@ -903,7 +826,7 @@ export const RotaryBoard: React.FC<RotaryBoardProps> = ({
                     </g>
                   )}
 
-                  {/* Hover Draft / Bump Prompt when Station 7 is active */}
+                  {/* Hover Draft Prompt when Station 7 is active */}
                   {isPantryTarget && (
                     <g transform="translate(0, 0.34)" className="pointer-events-none">
                       <rect
@@ -925,9 +848,7 @@ export const RotaryBoard: React.FC<RotaryBoardProps> = ({
                         fontWeight="900"
                         fontFamily="Cinzel, serif"
                       >
-                        {hasPantryMeepleHere && isHovered
-                          ? `BUMP & +1 ${def.name.toUpperCase()}`
-                          : `+1 ${def.name.toUpperCase()}`}
+                        {`+1 ${def.name.toUpperCase()}`}
                       </text>
                     </g>
                   )}
