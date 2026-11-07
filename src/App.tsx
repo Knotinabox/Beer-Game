@@ -31,6 +31,7 @@ import {
   performEndOfShiftSlide,
   executePhase2ConveyorOperations,
   toggleDepartmentsModule,
+  flipPlayerDepartmentCard,
 } from './engine/gameEngine';
 import { executeAITurn } from './engine/ai';
 import { VisualRulebookModal } from './components/VisualRulebookModal';
@@ -298,6 +299,10 @@ function MainAppContent() {
     setGameState((prev) => performDepartmentAction(prev, payload));
   };
 
+  const handleFlipDepartment = useCallback((playerId: string) => {
+    setGameState((prev) => flipPlayerDepartmentCard(prev, playerId));
+  }, []);
+
   // Ranked players for scoreboard
   const rankedPlayers = [...gameState.players].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
@@ -478,6 +483,7 @@ function MainAppContent() {
                 }}
                 onPlaceDepartment={handlePlaceDepartment}
                 onExecuteDepartmentAction={handleExecuteDepartmentAction}
+                onFlipDepartment={handleFlipDepartment}
               />
             </div>
           </div>

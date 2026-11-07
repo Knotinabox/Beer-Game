@@ -149,14 +149,16 @@ export type RecipeTierName =
 export type BreweryDepartmentId =
   | 'dept_night_shift'
   | 'dept_taproom'
-  | 'dept_hr_office'
-  | 'dept_maintenance_shop'
-  | 'dept_rd_desk'
-  | 'dept_grain_silo'
-  | 'dept_hop_locker'
   | 'dept_sourcing_desk'
   | 'dept_farm_swap'
-  | 'dept_yeast_bank';
+  | 'dept_grain_silo'
+  | 'dept_hop_locker'
+  | 'dept_yeast_bank'
+  | 'dept_rd_desk'
+  | 'dept_maintenance_shop'
+  | 'dept_hr_office'
+  | 'dept_qa_lab'
+  | 'dept_oak_cellar';
 
 export type BreweryDepartmentActionType =
   | 'advance_pipeline'
@@ -168,16 +170,22 @@ export type BreweryDepartmentActionType =
   | 'gain_hops_wild'
   | 'gain_two_distinct'
   | 'farm_swap'
-  | 'yeast_swap';
+  | 'yeast_swap'
+  | 'qa_lab_inspect'
+  | 'oak_cellar_maturation';
 
 export interface BreweryDepartmentCard {
   id: BreweryDepartmentId;
-  departmentNumber: number; // 1 to 10
+  departmentNumber: number; // 1 to 12 (initiative order)
+  physicalCardNumber?: number; // 1 to 6
+  side?: 'A' | 'B';
+  flipSideId?: BreweryDepartmentId;
   name: string;
   subtitle: string;
   category: 'logistics' | 'commercial' | 'personnel' | 'engineering' | 'production' | 'sourcing';
   flavorText: string;
   imagePath?: string;
+  tokenGraphic?: string;
   iconName: string;
   passiveEffect?: {
     type: 'grain_buffer' | 'hops_buffer' | 'yeast_buffer';
@@ -189,6 +197,15 @@ export interface BreweryDepartmentCard {
     type: BreweryDepartmentActionType;
     description: string;
   };
+}
+
+export interface DoubleSidedDepartmentCard {
+  id: string; // 'dept_card_1' to 'dept_card_6'
+  cardNumber: number; // 1 to 6
+  name: string;
+  sideA: BreweryDepartmentCard;
+  sideB: BreweryDepartmentCard;
+  activeSide: 'A' | 'B';
 }
 
 export type UpgradeType = 'equipment' | 'staff';
@@ -456,6 +473,10 @@ export interface PlayerState {
 
   /** Personal Brewery Department card (2.25" x 3.5" standard card docked flush left of Zone 1) */
   departmentCard?: BreweryDepartmentCard | null;
+  /** Double-sided physical department card assigned to player */
+  departmentCardPhysical?: DoubleSidedDepartmentCard | null;
+  /** Active side chosen by player ('A' or 'B') */
+  activeDepartmentSide?: 'A' | 'B';
   /** Meeple placed on personal brewery department during Phase 2 */
   departmentOccupant?: {
     playerId: string;

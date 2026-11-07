@@ -10,7 +10,9 @@ import {
   createTaproomDeck,
   createMixerPackDeck,
   createDepartmentDeck,
+  createDoubleSidedDepartmentDeck,
   BREWERY_DEPARTMENT_DEFINITIONS,
+  DOUBLE_SIDED_DEPARTMENT_CARDS,
   createInitialIngredientStations,
   INGREDIENT_STATION_METADATA,
   ROTARY_SLOT_DEFS,
@@ -1020,20 +1022,26 @@ export function createInitialGameState(config: {
   const mixerDeck: MixerPackCard[] = allMixerCards;
   const mixerDiscard: MixerPackCard[] = [];
 
-  // Deck 4: 10-Card Brewery Department Deck (Deal 1 unique department to each player if module enabled)
+  // Deck 4: 6 Double-Sided Brewery Department Cards (Deal 1 unique double-sided card to each player)
   const enableDepartments = config.enableDepartments !== false;
+  let doubleSidedDeck = shuffleArray(createDoubleSidedDepartmentDeck(), rng);
   let departmentDeck = shuffleArray(createDepartmentDeck(), rng);
   const departmentDiscard: BreweryDepartmentCard[] = [];
   if (enableDepartments) {
     for (let pIdx = 0; pIdx < players.length; pIdx++) {
-      if (departmentDeck.length > 0) {
-        players[pIdx].departmentCard = departmentDeck.shift()!;
+      if (doubleSidedDeck.length > 0) {
+        const doubleCard = doubleSidedDeck.shift()!;
+        players[pIdx].departmentCardPhysical = doubleCard;
+        players[pIdx].activeDepartmentSide = 'A';
+        players[pIdx].departmentCard = doubleCard.sideA;
         players[pIdx].departmentOccupant = null;
         players[pIdx].lastOccupiedDepartment = false;
       }
     }
   } else {
     for (let pIdx = 0; pIdx < players.length; pIdx++) {
+      players[pIdx].departmentCardPhysical = undefined;
+      players[pIdx].activeDepartmentSide = undefined;
       players[pIdx].departmentCard = undefined;
       players[pIdx].departmentOccupant = null;
       players[pIdx].lastOccupiedDepartment = false;
@@ -6396,7 +6404,7 @@ export function performDepartmentAction(
     }
 
     case 'yeast_swap': {
-      // #10: Yeast Bank - Take 1 Yeast + optional swap 1
+      // #7: Yeast Bank - Take 1 Yeast + optional swap 1
       if ((centralHoppers.yeast || 0) > 0) {
         centralHoppers.yeast -= 1;
         player.tokens.yeast = (player.tokens.yeast || 0) + 1;
@@ -6414,6 +6422,73 @@ export function performDepartmentAction(
         player,
         'PHASE_3_STATION_COMMITMENT',
         `🧬 YEAST PROPAGATION BANK: ${player.name} cultured 1 Yeast token and maintained pure strains!`
+      );
+      break;
+    }
+
+    case 'qa_lab_inspect': {
+      // #11: QA Lab - Take 1 token of choice from Central Hoppers + Advance 1 batch 1 zone forward!
+      const chosenTax = payload?.chosenToken || (['yeast', 'hops', 'grain', 'fruit', 'spices', 'chocolate'] as IngredientTaxonomy[]).find((t) => (centralHoppers[t] || 0) > 0) || 'yeast';
+      if ((centralHoppers[chosenTax] || 0) > 0) {
+        centralHoppers[chosenTax] -= 1;
+        player.tokens[chosenTax] = (player.tokens[chosenTax] || 0) + 1;
+      }
+
+      // Advance 1 batch forward: check from Zone 4 down to Zone 1
+      let movedBatchName = '';
+      if (player.zones[4].recipes.length > 0) {
+        const batch = player.zones[4].recipes.shift()!;
+        player.zones[5].recipes.push(batch);
+        movedBatchName = `${batch.name} (Zone 4 ➔ 5 Packaging)`;
+        // Zone 5 delivers & scores immediately!
+        const delivered = player.zones[5].recipes.shift()!;
+        (delivered as any).scored = true;
+        if (!player.completedBatches) player.completedBatches = [];
+        player.completedBatches.push(delivered);
+        player.score += delivered.vp;
+        player.scoreBreakdown.recipeBaseVp += delivered.vp;
+        if (player.completedBatches.length >= state.targetBatchesToTriggerEnd && !isFinalRound) {
+          isFinalRound = true;
+          endgameTriggeredByPlayerId = player.id;
+        }
+      } else if (player.zones[3].recipes.length > 0) {
+        const batch = player.zones[3].recipes.shift()!;
+        player.zones[4].recipes.push(batch);
+        movedBatchName = `${batch.name} (Zone 3 ➔ 4 Cold Room)`;
+      } else if (player.zones[2].recipes.length > 0) {
+        const batch = player.zones[2].recipes.shift()!;
+        player.zones[3].recipes.push(batch);
+        movedBatchName = `${batch.name} (Zone 2 ➔ 3 Cellar)`;
+      } else if (player.zones[1].recipes.length > 0) {
+        const batch = player.zones[1].recipes.shift()!;
+        player.zones[2].recipes.push(batch);
+        movedBatchName = `${batch.name} (Zone 1 ➔ 2 Brewhouse)`;
+      }
+
+      logs = addLog(
+        logs,
+        state.turnNumber,
+        player,
+        'PHASE_3_STATION_COMMITMENT',
+        `🔬 QA LAB: ${player.name} conducted assays, drafted 1 ${chosenTax.toUpperCase()} token${movedBatchName ? ` and advanced ${movedBatchName}` : ''}!`
+      );
+      break;
+    }
+
+    case 'oak_cellar_maturation': {
+      // #12: Oak Foeder Cellar - Take 1 Specialty token (chocolate, spices, fruit) into Warehouse
+      const specTax = payload?.chosenToken || (['chocolate', 'spices', 'fruit'] as IngredientTaxonomy[]).find((t) => (centralHoppers[t] || 0) > 0) || 'chocolate';
+      if ((centralHoppers[specTax] || 0) > 0) {
+        centralHoppers[specTax] -= 1;
+        player.tokens[specTax] = (player.tokens[specTax] || 0) + 1;
+      }
+
+      logs = addLog(
+        logs,
+        state.turnNumber,
+        player,
+        'PHASE_3_STATION_COMMITMENT',
+        `🪵 OAK FOEDER CELLAR: ${player.name} matured wild ales and harvested 1 Specialty ${specTax.toUpperCase()} token!`
       );
       break;
     }
@@ -6524,17 +6599,52 @@ export function performDepartmentAction(
   return executePhase1MarketRefresh(afterSlideState);
 }
 
+export function flipPlayerDepartmentCard(
+  state: GameState,
+  playerId: string,
+  targetSide?: 'A' | 'B'
+): GameState {
+  const players = state.players.map(clonePlayer);
+  const player = players.find((p) => p.id === playerId);
+  if (!player || !player.departmentCardPhysical) return state;
+
+  const physical = player.departmentCardPhysical;
+  const currentSide = player.activeDepartmentSide || 'A';
+  const nextSide = targetSide || (currentSide === 'A' ? 'B' : 'A');
+
+  physical.activeSide = nextSide;
+  player.activeDepartmentSide = nextSide;
+  player.departmentCard = nextSide === 'A' ? physical.sideA : physical.sideB;
+
+  updatePlayerMat(player);
+
+  const logs = addLog(
+    state.logs,
+    state.turnNumber,
+    player,
+    state.phase,
+    `🔄 ${player.name} flipped their Private Department card to Side ${nextSide}: ${player.departmentCard.name} (Resolves #${player.departmentCard.departmentNumber})!`
+  );
+
+  return {
+    ...state,
+    players,
+    logs,
+  };
+}
+
 export function toggleDepartmentsModule(state: GameState, enable?: boolean): GameState {
   const nextEnable = enable !== undefined ? enable : !(state.enableDepartments !== false);
+  const doubleCards = createDoubleSidedDepartmentDeck();
   const nextPlayers = state.players.map((p, idx) => {
     if (nextEnable) {
       if (!p.departmentCard) {
-        const usedIds = new Set(state.players.map((pl) => pl.departmentCard?.id).filter(Boolean));
-        const available = BREWERY_DEPARTMENT_DEFINITIONS.filter((d) => !usedIds.has(d.id));
-        const card = available[idx % available.length] || BREWERY_DEPARTMENT_DEFINITIONS[idx % BREWERY_DEPARTMENT_DEFINITIONS.length];
+        const doubleCard = doubleCards[idx % doubleCards.length];
         return {
           ...p,
-          departmentCard: card,
+          departmentCardPhysical: doubleCard,
+          activeDepartmentSide: 'A' as const,
+          departmentCard: doubleCard.sideA,
           departmentOccupant: null,
           lastOccupiedDepartment: false,
         };
@@ -6543,6 +6653,8 @@ export function toggleDepartmentsModule(state: GameState, enable?: boolean): Gam
     } else {
       return {
         ...p,
+        departmentCardPhysical: undefined,
+        activeDepartmentSide: undefined,
         departmentCard: undefined,
         departmentOccupant: null,
         lastOccupiedDepartment: false,

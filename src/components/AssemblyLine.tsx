@@ -40,6 +40,7 @@ import {
   Trash2,
   Wheat,
   Sparkles,
+  Repeat,
   PackageCheck,
   ChevronLeft,
   ChevronRight,
@@ -54,6 +55,7 @@ export interface AssemblyLineProps {
   onInspectZone?: (zoneId: ZoneId) => void;
   onPlaceDepartment?: (playerId: string) => void;
   onExecuteDepartmentAction?: (payload?: DepartmentActionPayload) => void;
+  onFlipDepartment?: (playerId: string) => void;
 }
 
 /**
@@ -323,6 +325,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
   onInspectZone,
   onPlaceDepartment,
   onExecuteDepartmentAction,
+  onFlipDepartment,
 }) => {
   const activePlayer = gameState.players[gameState.currentPlayerIndex];
   const inspectedPlayer =
@@ -543,20 +546,28 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
           </div>
         </div>
 
-        {/* 11.5" x 5.75" BOARD & DOCKED PERSONAL BREWERY DEPARTMENT (#1 - #10) */}
-        <div className="w-full flex flex-col xl:flex-row items-center gap-3.5">
-          {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse) */}
+        {/* 11.5" x 5.0" BOARD & DOCKED PERSONAL BREWERY DEPARTMENT (6 Double-Sided Cards • 12 Actions) */}
+        <div className="w-full flex flex-col xl:flex-row items-center gap-3">
+          {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse, scaled down ~15%) */}
           {inspectedPlayer.departmentCard && (
-            <div className="shrink-0 flex flex-col justify-center items-center relative w-[122px] sm:w-[130px] xl:w-[136px]">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[10px] font-sans font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
-                  Private Department
-                </span>
-                <span className="text-[9px] font-mono text-stone-400">
-                  (Left of Zone 1)
-                </span>
-              </div>
+            <div className="shrink-0 flex flex-col justify-center items-center relative w-[104px] sm:w-[110px] xl:w-[115px]">
+              {/* Sleek Double-Sided Card Flip Button */}
+              {inspectedPlayer.departmentCardPhysical && (
+                <button
+                  type="button"
+                  onClick={() => onFlipDepartment?.(inspectedPlayer.id)}
+                  disabled={!isActivePlayerInspected}
+                  className={`mb-1 px-2 py-0.5 rounded-full border text-[7px] sm:text-[7.5px] font-sans font-black flex items-center gap-1 shadow-md transition-all select-none ${
+                    isActivePlayerInspected
+                      ? 'bg-amber-950/80 border-amber-500/70 text-amber-200 hover:text-white hover:border-amber-300 hover:scale-105 active:scale-95 cursor-pointer'
+                      : 'bg-stone-900/60 border-stone-700/60 text-stone-400 cursor-default opacity-75'
+                  }`}
+                  title="Double-Sided Department Card: click to flip between Side A and Side B"
+                >
+                  <Repeat className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                  <span className="truncate">Card #{inspectedPlayer.departmentCardPhysical.cardNumber} • Side {inspectedPlayer.activeDepartmentSide || 'A'} (Flip)</span>
+                </button>
+              )}
               <div className="relative w-full">
                 <DepartmentCardView
                   department={inspectedPlayer.departmentCard}
@@ -577,12 +588,14 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
                     inspectedPlayer.departmentOccupant?.playerId === inspectedPlayer.id
                   }
                   onExecuteAction={onExecuteDepartmentAction}
+                  onFlipCard={() => onFlipDepartment?.(inspectedPlayer.id)}
                 />
                 {/* Visual Brass Docking Bracket joining Department Card to Zone 1 */}
-                <div className="hidden xl:flex absolute -right-2.5 top-1/2 -translate-y-1/2 z-30 flex-col items-center gap-0.5"
+                <div
+                  className="hidden xl:flex absolute -right-2 top-1/2 -translate-y-1/2 z-30 flex-col items-center gap-0.5"
                   title="Industrial Brass Clamp docking Department Card flush to Zone 1 Warehouse"
                 >
-                  <div className="w-3.5 h-6 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 rounded-sm border border-amber-300/80 shadow-lg flex items-center justify-center">
+                  <div className="w-3 h-5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 rounded-sm border border-amber-300/80 shadow-lg flex items-center justify-center">
                     <div className="w-1.5 h-1.5 rounded-full bg-stone-900 border border-amber-300" />
                   </div>
                 </div>

@@ -37,6 +37,22 @@ describe('Personal Brewery Departments Visual Verification', () => {
     const deptCard = page.locator('[data-department-card]').first();
     await deptCard.waitFor({ state: 'visible', timeout: 10000 });
 
+    // Capture closeup of docked department card (Side A)
+    const cardSideAPath = path.join(ARTIFACT_DIR, 'department_card_side_a.png');
+    await deptCard.screenshot({ path: cardSideAPath });
+    console.log('Saved Side A closeup:', cardSideAPath);
+
+    // Test Flip Card button to flip to Side B
+    console.log('Flipping card to Side B...');
+    const flipBtn = page.locator('button:has-text("(Flip)")').first();
+    if ((await flipBtn.count()) > 0) {
+      await flipBtn.click();
+      await page.waitForTimeout(500);
+      const cardSideBPath = path.join(ARTIFACT_DIR, 'department_card_side_b.png');
+      await deptCard.screenshot({ path: cardSideBPath });
+      console.log('Saved Side B closeup:', cardSideBPath);
+    }
+
     const tableWithDeptPath = path.join(ARTIFACT_DIR, 'tabletop_with_department_placed.png');
     await page.screenshot({ path: tableWithDeptPath });
     console.log('Saved:', tableWithDeptPath);

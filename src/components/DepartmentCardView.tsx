@@ -7,7 +7,6 @@ import {
 } from '../engine/types';
 import { DepartmentActionPayload } from '../engine/gameEngine';
 import { BrewerMeepleSVG } from './CenterMarket';
-import { WOODEN_TOKEN_COLORS } from './WoodenTokens';
 import {
   Moon,
   Beer,
@@ -20,7 +19,6 @@ import {
   Repeat,
   Dna,
   Shield,
-  Clock,
   Sparkles,
   ArrowRight,
   CheckCircle2,
@@ -37,69 +35,57 @@ export interface DepartmentCardViewProps {
   onPlaceMeeple?: () => void;
   canExecuteAction?: boolean;
   onExecuteAction?: (payload?: DepartmentActionPayload) => void;
+  onFlipCard?: () => void;
   compact?: boolean;
   className?: string;
 }
 
 const CATEGORY_STYLES: Record<
   BreweryDepartmentCard['category'],
-  { label: string; bg: string; text: string; border: string; iconColor: string }
+  { label: string; bg: string; text: string; border: string; glow: string }
 > = {
   production: {
     label: 'Production',
-    bg: 'bg-orange-950/80',
+    bg: 'bg-orange-950/90',
     text: 'text-orange-200',
-    border: 'border-orange-500/60',
-    iconColor: '#f97316',
+    border: 'border-orange-500/80',
+    glow: 'rgba(249, 115, 22, 0.4)',
   },
   commercial: {
     label: 'Commercial',
-    bg: 'bg-amber-950/80',
+    bg: 'bg-amber-950/90',
     text: 'text-amber-200',
-    border: 'border-amber-500/60',
-    iconColor: '#f59e0b',
+    border: 'border-amber-500/80',
+    glow: 'rgba(245, 158, 11, 0.4)',
   },
   personnel: {
     label: 'Personnel',
-    bg: 'bg-purple-950/80',
+    bg: 'bg-purple-950/90',
     text: 'text-purple-200',
-    border: 'border-purple-500/60',
-    iconColor: '#c084fc',
+    border: 'border-purple-500/80',
+    glow: 'rgba(192, 132, 252, 0.4)',
   },
   engineering: {
     label: 'Engineering',
-    bg: 'bg-blue-950/80',
+    bg: 'bg-blue-950/90',
     text: 'text-blue-200',
-    border: 'border-blue-500/60',
-    iconColor: '#60a5fa',
+    border: 'border-blue-500/80',
+    glow: 'rgba(96, 165, 250, 0.4)',
   },
   logistics: {
     label: 'Logistics',
-    bg: 'bg-yellow-950/80',
+    bg: 'bg-yellow-950/90',
     text: 'text-yellow-200',
-    border: 'border-yellow-500/60',
-    iconColor: '#eab308',
+    border: 'border-yellow-500/80',
+    glow: 'rgba(234, 179, 8, 0.4)',
   },
   sourcing: {
     label: 'Sourcing',
-    bg: 'bg-emerald-950/80',
+    bg: 'bg-emerald-950/90',
     text: 'text-emerald-200',
-    border: 'border-emerald-500/60',
-    iconColor: '#34d399',
+    border: 'border-emerald-500/80',
+    glow: 'rgba(52, 211, 153, 0.4)',
   },
-};
-
-const DEPARTMENT_ICONS: Record<string, React.ReactNode> = {
-  Moon: <Moon className="w-4 h-4 text-amber-300" />,
-  Beer: <Beer className="w-4 h-4 text-amber-300" />,
-  Users: <Users className="w-4 h-4 text-amber-300" />,
-  Wrench: <Wrench className="w-4 h-4 text-amber-300" />,
-  FlaskConical: <FlaskConical className="w-4 h-4 text-amber-300" />,
-  Wheat: <Wheat className="w-4 h-4 text-amber-300" />,
-  Snowflake: <Snowflake className="w-4 h-4 text-cyan-300" />,
-  ClipboardCheck: <ClipboardCheck className="w-4 h-4 text-amber-300" />,
-  Repeat: <Repeat className="w-4 h-4 text-amber-300" />,
-  Dna: <Dna className="w-4 h-4 text-amber-300" />,
 };
 
 export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
@@ -112,6 +98,7 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
   onPlaceMeeple,
   canExecuteAction = false,
   onExecuteAction,
+  onFlipCard,
   compact = false,
   className = '',
 }) => {
@@ -129,7 +116,9 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
     if (
       department.actionEffect.type === 'gain_hops_wild' ||
       department.actionEffect.type === 'gain_two_distinct' ||
-      department.actionEffect.type === 'farm_swap'
+      department.actionEffect.type === 'farm_swap' ||
+      department.actionEffect.type === 'qa_lab_inspect' ||
+      department.actionEffect.type === 'oak_cellar_maturation'
     ) {
       setShowChoiceModal(true);
     } else {
@@ -148,187 +137,205 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
 
   return (
     <>
+      {/* ===================================================================
+          AUTHENTIC 2.25" x 3.5" PHYSICAL CARD CONTAINER
+          Uses identical parchment border, proportions, and detent hierarchy
+          as the canonical Staff/Equipment cards.
+      =================================================================== */}
       <div
         data-department-card={`dept-${department.departmentNumber}`}
-        className={`relative flex flex-col justify-between rounded-2xl overflow-hidden border-2 shadow-2xl transition-all duration-300 select-none group w-full aspect-[2.25/3.5] ${
+        className={`parchment-card overflow-hidden flex flex-col justify-between p-1.5 sm:p-2 relative select-none w-full aspect-[2.25/3.5] rounded-2xl shadow-2xl transition-all duration-300 ${
           canPlaceMeeple
-            ? 'border-amber-400 ring-2 ring-amber-400/60 shadow-amber-500/20 hover:scale-[1.02] cursor-pointer'
+            ? 'ring-2 ring-amber-400 shadow-amber-500/30 hover:scale-[1.02]'
             : isOccupied
-            ? 'border-amber-500/80 shadow-black/80'
-            : 'border-amber-800/60 hover:border-amber-600/70'
+            ? 'ring-1 ring-amber-500/60 shadow-black/80'
+            : 'hover:border-amber-600/70'
         } ${className}`}
         style={{
-          background: 'linear-gradient(180deg, #1C120C 0%, #120B07 50%, #0A0604 100%)',
-          boxShadow: 'inset 0 1px 0 rgba(254, 240, 138, 0.2), inset 0 0 0 1px rgba(200, 125, 50, 0.3), 0 12px 24px rgba(0,0,0,0.85)',
-        }}
-        onClick={() => {
-          if (canPlaceMeeple && onPlaceMeeple) {
-            onPlaceMeeple();
-          }
+          backgroundColor: '#FAF7F0',
+          borderColor: '#85581A',
+          boxShadow: isOccupied
+            ? '0 6px 20px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(133,88,26,0.4)'
+            : canPlaceMeeple
+            ? '0 0 16px rgba(245, 158, 11, 0.4), 0 6px 20px rgba(0,0,0,0.7)'
+            : '0 4px 16px rgba(0,0,0,0.6)',
         }}
       >
-        {/* Subtle authentic paper texture & vignette overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 via-transparent to-black/60 pointer-events-none z-0" />
-        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none z-0" />
-
         {/* ===================================================================
-            HEADER: Brass Porthole Number (#1-#10) + Category Badge + Title
+            UPPER BAR: MEEPLE SLOT (LEFT) • NAME & CATEGORY (CENTER) • TURN # (RIGHT)
+            Slim, elegant header matching canonical Staff / Equipment cards.
         =================================================================== */}
-        <div className="p-1.5 pb-1 relative z-10 space-y-0.5 border-b border-amber-900/50 bg-black/40">
-          <div className="flex items-center justify-between gap-1.5">
-            {/* The Brass Porthole Number (#1 - #10) */}
-            <div
-              className="w-6 h-6 rounded-full border border-amber-400/90 flex items-center justify-center font-display font-black text-[10px] text-stone-950 shadow-md shrink-0 text-stone-950 shadow-md shrink-0"
-              style={{
-                background: 'radial-gradient(circle, #FDE047 0%, #EAB308 55%, #A16207 100%)',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.7)',
-              }}
-              title={`Department #${department.departmentNumber} (Tier 2 Shift Initiative: Resolves after Catwalks)`}
-            >
-              #{department.departmentNumber}
-            </div>
+        <div
+          className="rounded-lg border border-amber-500/80 bg-gradient-to-b from-[#183325] via-[#10241A] to-[#0A1610] shrink-0 z-10 flex items-center justify-between shadow-[0_2px_6px_rgba(0,0,0,0.85)] relative overflow-hidden w-full px-1 py-0.5 h-[26px] sm:h-[30px]"
+          style={{
+            backgroundColor: 'rgba(7, 25, 16, 0.95)',
+            border: `1px solid ${catStyle.border.replace('border-', '') || '#10b981'}`,
+            boxShadow: `inset 0 1px 0 rgba(254,240,138,0.35), 0 2px 6px rgba(0,0,0,0.8), 0 0 4px ${catStyle.glow}`,
+          }}
+        >
+          {/* Left: Interactive Worker Placement Slot / Detent */}
+          <div
+            className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border flex items-center justify-center relative shrink-0 transition-all ${
+              isOccupied
+                ? 'border-amber-400 bg-amber-950/90 shadow-md'
+                : canPlaceMeeple
+                ? 'border-amber-300 bg-amber-500/30 ring-2 ring-amber-400 animate-pulse cursor-pointer hover:scale-110 shadow-lg'
+                : 'border-stone-600/70 bg-black/70 shadow-inner'
+            }`}
+            onClick={(e) => {
+              if (canPlaceMeeple && onPlaceMeeple) {
+                e.stopPropagation();
+                onPlaceMeeple();
+              }
+            }}
+            title={
+              isOccupied
+                ? `Stationed: ${occupant?.playerName}`
+                : canPlaceMeeple
+                ? 'Click to place your Brewer Meeple!'
+                : 'Meeple Placement Porthole'
+            }
+          >
+            {isOccupied && occupant ? (
+              <BrewerMeepleSVG color={occupant.playerColor} size={14} />
+            ) : canPlaceMeeple ? (
+              <Sparkles className="w-3 h-3 text-amber-300 animate-spin" style={{ animationDuration: '4s' }} />
+            ) : (
+              <div className="opacity-30">
+                <BrewerMeepleSVG color="#AAA" size={11} />
+              </div>
+            )}
+          </div>
 
-            {/* Category Tag */}
+          {/* Center: Department Name & Category Pill Badge */}
+          <div className="flex-1 text-center min-w-0 px-0.5 flex flex-col items-center justify-center overflow-hidden">
             <span
-              className={`px-2 py-0.5 rounded-full text-[7px] font-sans font-black uppercase tracking-wider px-1.5 py-0.2 border shadow-sm ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}
+              className="font-display font-black text-stone-100 uppercase truncate max-w-full drop-shadow-md leading-none text-[7.5px] sm:text-[8px] tracking-tight"
+              title={department.name}
+            >
+              {department.name}
+            </span>
+            <span
+              className={`inline-flex items-center justify-center font-display font-black uppercase tracking-wider px-1 py-0.1 rounded text-[5px] sm:text-[5.5px] border shadow-sm leading-none mt-0.5 max-w-full truncate ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}
+              title={`Department Category: ${catStyle.label}`}
             >
               {catStyle.label}
             </span>
           </div>
 
-          <div>
-            <h3 className="font-serif font-black text-[10.5px] sm:text-[11px] text-amber-100 leading-tight tracking-wide truncate">
-              {department.name}
-            </h3>
-            <p className="text-[7px] text-amber-300/70 font-sans tracking-tight truncate">
-              {department.subtitle}
-            </p>
-          </div>
-        </div>
-
-        {/* ===================================================================
-            CENTER CANVAS: Artwork + Interactive Worker Placement Porthole
-        =================================================================== */}
-        <div className="relative px-2 py-1.5 flex-1 flex flex-col justify-center items-center z-10 min-h-[46px] py-1 px-1.5">
-          {/* Background Illustration Thumbnail */}
-          {department.imagePath && (
-            <div className="absolute inset-2 rounded-xl overflow-hidden opacity-30 border border-amber-900/40 pointer-events-none">
-              <img
-                src={department.imagePath}
-                alt=""
-                className="w-full h-full object-cover filter contrast-125 brightness-90"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#120B07] via-transparent to-transparent" />
-            </div>
-          )}
-
-          {/* Dedicated Worker Placement Porthole */}
-          <div className="relative z-20 flex flex-col items-center">
-            <div
-              className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                isOccupied
-                  ? 'border-amber-400 bg-amber-950/90 shadow-xl'
-                  : canPlaceMeeple
-                  ? 'border-amber-300 bg-amber-500/25 ring-4 ring-amber-400/50 animate-pulse scale-105 shadow-2xl cursor-pointer'
-                  : 'border-amber-800/60 bg-black/75 shadow-inner'
-              }`}
-              style={{
-                boxShadow: isOccupied
-                  ? 'inset 0 2px 4px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.9)'
-                  : 'inset 0 2px 5px rgba(0,0,0,0.9)',
-              }}
-              onClick={(e) => {
-                if (canPlaceMeeple && onPlaceMeeple) {
-                  e.stopPropagation();
-                  onPlaceMeeple();
-                }
-              }}
-            >
-              {isOccupied && occupant ? (
-                <div className="flex flex-col items-center justify-center animate-fade-in">
-                  <BrewerMeepleSVG color={occupant.playerColor} size={20} />
-                  <span
-                    className="absolute -bottom-1.5 px-1 py-0.2 rounded bg-black/90 border border-amber-400/70 text-[6.5px] font-mono font-bold text-amber-200 tracking-wider truncate max-w-[44px] shadow"
-                  >
-                    {occupant.playerName.split(' ')[0]}
-                  </span>
-                </div>
-              ) : canPlaceMeeple ? (
-                <div className="flex flex-col items-center justify-center gap-0.5 text-center p-1">
-                  <Sparkles className="w-4 h-4 text-amber-300 animate-spin" style={{ animationDuration: '4s' }} />
-                  <span className="text-[7.5px] font-sans font-black text-amber-200 uppercase tracking-tighter leading-none">
-                    Place Meeple
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center opacity-50">
-                  {DEPARTMENT_ICONS[department.iconName] || <Clock className="w-4 h-4 text-stone-400" />}
-                  <span className="text-[7px] font-mono text-stone-400 uppercase tracking-wider mt-0.5">
-                    Shift Bay
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Porthole Detent Rim Label */}
-            <span className="mt-0.5 text-[6.5px] font-mono uppercase tracking-widest text-amber-400/80 font-bold">
-              {isOccupied ? 'OCCUPIED' : canPlaceMeeple ? 'CLICK TO PLACE' : 'PRIVATE DEPT'}
+          {/* Right: Department Initiative Resolution Turn Number (#1 to #12) */}
+          <div
+            className="flex items-baseline justify-center gap-0.5 shrink-0 whitespace-nowrap select-none px-0.5"
+            title={`Tier 2 Shift Initiative #${department.departmentNumber} (Resolves after Public Catwalks 1-7)`}
+          >
+            <span className="font-mono font-black text-[10px] sm:text-[11px] leading-none text-amber-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              #{department.departmentNumber}
             </span>
           </div>
         </div>
 
         {/* ===================================================================
-            BODY: Passive Buffer (if any) + Shift Action Text + Trigger Button
+            CENTER CANVAS: THE LARGE HIGH-RESOLUTION ARTWORK IN THE MIDDLE
+            Guaranteed ~52% of total card height, matching Hop Broker character portrait.
         =================================================================== */}
-        <div className="p-1.5 pt-1 relative z-10 space-y-0.5 bg-black/60 border-t border-amber-900/40">
-          {/* Passive Buffer Badge */}
-          {department.passiveEffect && (
-            <div className="px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/50 flex items-center gap-1.5 shadow-sm">
-              <Shield className="w-3 h-3 text-emerald-400 shrink-0" />
-              <div className="text-[7px] font-mono text-emerald-200 font-bold leading-tight">
-                <span className="text-emerald-300 uppercase tracking-wider">✦ PASSIVE: </span>
-                {department.passiveEffect.description}
-              </div>
+        <div className="relative w-full flex-1 min-h-[75px] sm:min-h-[85px] rounded-lg overflow-hidden border border-amber-500/80 bg-[#07120B] shadow-md my-1 flex items-center justify-center group">
+          {department.imagePath ? (
+            <>
+              <img
+                src={department.imagePath}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover blur-sm opacity-35 scale-105 pointer-events-none"
+              />
+              <img
+                src={department.imagePath}
+                alt={department.name}
+                className="relative w-full h-full object-cover object-center pointer-events-none transition-transform duration-300 group-hover:scale-102 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] z-10"
+              />
+            </>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-amber-950 via-stone-900 to-black flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-amber-400/40" />
             </div>
           )}
 
-          {/* Action Box */}
-          <div className="px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-500/40 flex flex-col gap-0.5 shadow-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-[7px] font-sans font-black text-amber-300 uppercase tracking-wider">
-                ⚡ SHIFT ACTION:
+          {/* Inner metallic foil border */}
+          <div className="absolute inset-[2px] rounded border border-amber-400/25 pointer-events-none z-20" />
+
+          {/* Placement Callout Banner if deployable */}
+          {canPlaceMeeple && (
+            <div className="absolute inset-0 bg-amber-500/10 z-20 flex items-center justify-center pointer-events-none">
+              <span className="bg-black/90 text-amber-300 text-[6.5px] font-sans font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-amber-400/80 shadow-lg">
+                Click Porthole to Deploy
               </span>
             </div>
-            <p className="text-[7px] text-amber-100/90 leading-tight">
-              {department.actionEffect.description}
-            </p>
+          )}
+
+          {/* Side Indicator Badge in bottom-left corner of image */}
+          {department.side && (
+            <div className="absolute bottom-1 left-1 z-20 px-1 py-0.2 rounded bg-black/80 border border-amber-400/60 text-[6px] font-mono font-bold text-amber-200">
+              Side {department.side}
+            </div>
+          )}
+        </div>
+
+        {/* ===================================================================
+            LOWER BAR: DESCRIPTION AT THE BOTTOM (RULE TEXT & THEMATIC TOKEN)
+            Matches exact layout of Hop Broker lower effect box.
+        =================================================================== */}
+        <div
+          className="rounded-lg border border-amber-500/80 bg-gradient-to-b from-[#183325] via-[#10241A] to-[#0A1610] shrink-0 z-10 flex flex-col justify-between shadow-[0_2px_6px_rgba(0,0,0,0.85)] relative overflow-hidden w-full p-1"
+          style={{
+            backgroundColor: 'rgba(7, 25, 16, 0.95)',
+            border: '1px solid rgba(16, 185, 129, 0.85)',
+            boxShadow: 'inset 0 1px 0 rgba(167,243,208,0.35), 0 2px 6px rgba(0,0,0,0.8)',
+          }}
+        >
+          <div className="w-full flex items-start justify-between gap-1 overflow-hidden">
+            {/* Rule / Passive / Action Text */}
+            <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+              {department.passiveEffect && (
+                <div className="flex items-center">
+                  <span className="font-sans font-black text-emerald-300 uppercase tracking-wide text-[6px] sm:text-[6.5px] leading-tight truncate">
+                    ✦ +1 {department.passiveEffect.extraCapacityToken?.toUpperCase() || ''} BUFFER
+                  </span>
+                </div>
+              )}
+              <p className="font-sans text-[6px] sm:text-[6.5px] text-stone-200 leading-tight">
+                <span className="font-black text-amber-300 uppercase">⚡ </span>
+                {department.actionEffect.description}
+              </p>
+            </div>
+
+            {/* Right: Thematic Token Graphic (matching Hop Broker token piece on right) */}
+            <div className="shrink-0 flex items-center justify-center pl-0.5">
+              {department.tokenGraphic ? (
+                <img
+                  src={department.tokenGraphic}
+                  alt=""
+                  className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain filter drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
+                />
+              ) : (
+                <Sparkles className="w-3 h-3 text-amber-300" />
+              )}
+            </div>
           </div>
 
-          {/* Phase 3 Action Execution Trigger Button (for active player when occupied) */}
+          {/* Execute Action Button (when occupied during Phase 3) */}
           {canExecuteAction && (
             <button
               type="button"
               onClick={handleActionClick}
-              className="w-full mt-0.5 py-1 px-1.5 rounded-lg bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-sans font-black text-[9px] uppercase tracking-wider shadow-lg hover:scale-[1.02] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-amber-300"
+              className="w-full mt-1 py-0.5 px-1 rounded bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-sans font-black text-[7px] uppercase tracking-wider shadow hover:scale-[1.02] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1 border border-amber-300"
             >
               <span>Execute Action</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-2.5 h-2.5" />
             </button>
           )}
-
-          {/* Initiative order reminder footer */}
-          <div className="flex items-center justify-between text-[6.5px] font-mono text-stone-400 pt-0.5 border-t border-stone-800/50">
-            <span>Tier 2 Turn #{department.departmentNumber}</span>
-            <span className="text-amber-400/80">Resolves 2nd</span>
-          </div>
         </div>
       </div>
 
       {/* ===================================================================
-          MODAL: Action Choice Selection (for Sourcing, Farm Swap, etc.)
+          MODAL: Action Choice Selection (for Tokens, Swaps, or QA Lab)
       =================================================================== */}
       {showChoiceModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -384,31 +391,34 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
               </div>
             )}
 
-            {/* First Token Choice */}
+            {/* First Token Choice (Wild, Distinct, QA Lab, or Oak Foeder) */}
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider block">
-                {department.actionEffect.type === 'gain_hops_wild'
+                {department.actionEffect.type === 'oak_cellar_maturation'
+                  ? 'Select 1 Specialty Token to Gain:'
+                  : department.actionEffect.type === 'gain_hops_wild'
                   ? 'Select 1 Wild Token to Gain:'
                   : 'Select First Token to Gain:'}
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {(['grain', 'hops', 'yeast', 'fruit', 'spices', 'chocolate'] as IngredientTaxonomy[]).map(
-                  (tax) => (
-                    <button
-                      key={`g1-${tax}`}
-                      type="button"
-                      onClick={() => setChosenToken(tax)}
-                      className={`px-2 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-2 cursor-pointer transition-all ${
-                        chosenToken === tax
-                          ? 'bg-amber-500/30 border-amber-400 text-white ring-2 ring-amber-400/60'
-                          : 'bg-black/40 border-stone-700 text-stone-300 hover:border-amber-400'
-                      }`}
-                    >
-                      <img src={`/tokens/${tax}-wood-piece.png`} alt={tax} className="w-4 h-4 object-contain" />
-                      <span className="capitalize">{tax}</span>
-                    </button>
-                  )
-                )}
+                {(department.actionEffect.type === 'oak_cellar_maturation'
+                  ? (['chocolate', 'spices', 'fruit'] as IngredientTaxonomy[])
+                  : (['grain', 'hops', 'yeast', 'fruit', 'spices', 'chocolate'] as IngredientTaxonomy[])
+                ).map((tax) => (
+                  <button
+                    key={`g1-${tax}`}
+                    type="button"
+                    onClick={() => setChosenToken(tax)}
+                    className={`px-2 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-2 cursor-pointer transition-all ${
+                      chosenToken === tax
+                        ? 'bg-amber-500/30 border-amber-400 text-white ring-2 ring-amber-400/60'
+                        : 'bg-black/40 border-stone-700 text-stone-300 hover:border-amber-400'
+                    }`}
+                  >
+                    <img src={`/tokens/${tax}-wood-piece.png`} alt={tax} className="w-4 h-4 object-contain" />
+                    <span className="capitalize">{tax}</span>
+                  </button>
+                ))}
               </div>
             </div>
 

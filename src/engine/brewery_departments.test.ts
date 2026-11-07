@@ -7,45 +7,84 @@ import {
   performStationCommitment,
   getWarehouseCapacity,
   toggleDepartmentsModule,
+  flipPlayerDepartmentCard,
 } from './gameEngine';
-import { BREWERY_DEPARTMENT_DEFINITIONS, createDepartmentDeck } from './cards';
+import {
+  BREWERY_DEPARTMENT_DEFINITIONS,
+  DOUBLE_SIDED_DEPARTMENT_CARDS,
+  createDepartmentDeck,
+  createDoubleSidedDepartmentDeck,
+} from './cards';
 import { PlayerState, RotarySlotNumber } from './types';
 
-describe('Personal Brewery Departments System (#1 - #10)', () => {
-  it('initializes 10 unique Brewery Department cards with correct numbers and categories', () => {
+describe('Personal Brewery Departments System (6 Double-Sided Cards • 12 Actions)', () => {
+  it('initializes 12 unique Brewery Department actions and 6 double-sided cards', () => {
     const deck = createDepartmentDeck();
-    expect(deck).toHaveLength(10);
+    expect(deck).toHaveLength(12);
 
     const numbers = deck.map((d) => d.departmentNumber).sort((a, b) => a - b);
-    expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 
     const ids = deck.map((d) => d.id);
     expect(ids).toContain('dept_night_shift');
     expect(ids).toContain('dept_taproom');
-    expect(ids).toContain('dept_hr_office');
-    expect(ids).toContain('dept_maintenance_shop');
-    expect(ids).toContain('dept_rd_desk');
-    expect(ids).toContain('dept_grain_silo');
-    expect(ids).toContain('dept_hop_locker');
     expect(ids).toContain('dept_sourcing_desk');
     expect(ids).toContain('dept_farm_swap');
+    expect(ids).toContain('dept_grain_silo');
+    expect(ids).toContain('dept_hop_locker');
     expect(ids).toContain('dept_yeast_bank');
+    expect(ids).toContain('dept_rd_desk');
+    expect(ids).toContain('dept_maintenance_shop');
+    expect(ids).toContain('dept_hr_office');
+    expect(ids).toContain('dept_qa_lab');
+    expect(ids).toContain('dept_oak_cellar');
+
+    const doubleCards = createDoubleSidedDepartmentDeck();
+    expect(doubleCards).toHaveLength(6);
+    for (const dc of doubleCards) {
+      expect(dc.sideA).toBeDefined();
+      expect(dc.sideB).toBeDefined();
+      expect(dc.sideA.departmentNumber).not.toEqual(dc.sideB.departmentNumber);
+    }
   });
 
-  it('deals 1 unique department card to each player at game setup', () => {
+  it('deals 1 unique double-sided department card to each player at game setup', () => {
     const state = createInitialGameState({ playerCount: 4, humanCount: 1 });
     expect(state.players).toHaveLength(4);
 
-    const dealtDeptIds = new Set<string>();
+    const dealtCards = new Set<string>();
     for (const p of state.players) {
       expect(p.departmentCard).toBeDefined();
-      expect(p.departmentCard?.id).toBeDefined();
-      dealtDeptIds.add(p.departmentCard!.id);
+      expect(p.departmentCardPhysical).toBeDefined();
+      expect(p.activeDepartmentSide).toBe('A');
+      expect(p.departmentCard?.id).toBe(p.departmentCardPhysical?.sideA.id);
+      dealtCards.add(p.departmentCardPhysical!.id);
       expect(p.departmentOccupant).toBeNull();
       expect(p.lastOccupiedDepartment).toBe(false);
     }
-    // All 4 players have unique department cards
-    expect(dealtDeptIds.size).toBe(4);
+    // All 4 players have unique physical cards
+    expect(dealtCards.size).toBe(4);
+  });
+
+  it('allows players to flip between Side A and Side B of their double-sided card', () => {
+    let state = createInitialGameState({ playerCount: 4, humanCount: 1 });
+    const p1 = state.players[0];
+    const originalDept = p1.departmentCard!;
+    expect(p1.activeDepartmentSide).toBe('A');
+
+    // Flip to Side B
+    state = flipPlayerDepartmentCard(state, p1.id);
+    const p1Flipped = state.players[0];
+    expect(p1Flipped.activeDepartmentSide).toBe('B');
+    expect(p1Flipped.departmentCard?.id).toBe(p1.departmentCardPhysical?.sideB.id);
+    expect(p1Flipped.departmentCard?.departmentNumber).toBe(p1.departmentCardPhysical?.sideB.departmentNumber);
+    expect(p1Flipped.departmentCard?.id).not.toBe(originalDept.id);
+
+    // Flip back to Side A
+    state = flipPlayerDepartmentCard(state, p1.id);
+    const p1Back = state.players[0];
+    expect(p1Back.activeDepartmentSide).toBe('A');
+    expect(p1Back.departmentCard?.id).toBe(originalDept.id);
   });
 
   it('applies passive storage buffer to getWarehouseCapacity', () => {

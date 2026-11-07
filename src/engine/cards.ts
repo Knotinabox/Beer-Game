@@ -14,6 +14,7 @@ import {
   MixerPackCard,
   RotarySlotNumber,
   BreweryDepartmentCard,
+  DoubleSidedDepartmentCard,
 } from './types';
 
 export interface RotarySlotDefinition {
@@ -2430,89 +2431,101 @@ export function createFullCatalog() {
 }
 
 // ============================================================================
-// PERSONAL BREWERY DEPARTMENT DECK (10 Unique 2.25" x 3.5" Cards)
+// PERSONAL BREWERY DEPARTMENT DECK (6 Double-Sided Cards • 12 Unique Actions)
 // Docks flush to the left of Zone 1 Warehouse.
-// Numbered 1 to 10 for deterministic Tier 2 shift resolution order!
+// Cards are double-sided (Side A / Side B) so players choose their preferred department.
+// Numbered 1 to 12 for deterministic Tier 2 shift resolution order!
 // ============================================================================
 export const BREWERY_DEPARTMENT_DEFINITIONS: BreweryDepartmentCard[] = [
+  // --- CARD 1: SHIFT OPERATIONS ---
   {
     id: 'dept_night_shift',
     departmentNumber: 1,
-    name: 'The Night Shift',
+    physicalCardNumber: 1,
+    side: 'A',
+    flipSideId: 'dept_taproom',
+    name: 'Night Shift',
     subtitle: 'Overnight Operations Crew',
     category: 'production',
     flavorText: 'When the city sleeps, the cellar sings. Midnight transfers keep the brewery running 24/7.',
     imagePath: '/zones/zone-2-brewhouse.jpg',
+    tokenGraphic: '/tokens/yeast-wood-piece.png',
     iconName: 'Moon',
     actionEffect: {
       type: 'advance_pipeline',
-      description: 'Full Brewery Advance: Shift all batches rightward (4➔5, 3➔4, 2➔3, 1➔2). Zone 5 delivers & scores VP immediately!',
+      description: 'Advance all batches rightward; Zone 5 delivers & scores VP!',
     },
   },
   {
     id: 'dept_taproom',
     departmentNumber: 2,
+    physicalCardNumber: 1,
+    side: 'B',
+    flipSideId: 'dept_night_shift',
     name: 'The Taproom',
     subtitle: 'Direct-to-Consumer Draft',
     category: 'commercial',
     flavorText: 'Fresh beer straight from conditioning tanks to the guest glass. No canning line needed.',
-    imagePath: '/board/brewhouse-kettle-hub.jpg',
+    imagePath: '/upgrades/staff-taproom-lead.jpg',
+    tokenGraphic: '/tokens/hops-wood-piece.png',
     iconName: 'Beer',
     actionEffect: {
       type: 'taproom_direct_sale',
-      description: 'Direct-to-Consumer Draft: Move 1 finished beer from Zone 4 (Cold Room) directly to Trophy Rack, skipping Zone 5 packaging!',
+      description: 'Draft: Move 1 finished beer from Zone 4 directly to Trophy Rack!',
     },
   },
+
+  // --- CARD 2: SOURCING & BARTER ---
   {
-    id: 'dept_hr_office',
+    id: 'dept_sourcing_desk',
     departmentNumber: 3,
-    name: 'Human Resources Office',
-    subtitle: 'Talent Acquisition & Staffing',
-    category: 'personnel',
-    flavorText: 'Great beer is brewed by great people. Find the right hands for the cellar floor.',
-    imagePath: '/upgrades/staff-warehouse-foreman.jpg',
-    iconName: 'Users',
+    physicalCardNumber: 2,
+    side: 'A',
+    flipSideId: 'dept_farm_swap',
+    name: 'Sourcing Desk',
+    subtitle: 'Bespoke Purchasing',
+    category: 'sourcing',
+    flavorText: 'Direct grower relations secure premier lot allocations from the Fraser Valley to Saaz.',
+    imagePath: '/board/rotary-dial-artwork.jpg',
+    tokenGraphic: '/tokens/hops-wood-piece.png',
+    iconName: 'ClipboardCheck',
     actionEffect: {
-      type: 'draft_staff_top3',
-      description: 'Look at the top 3 cards of the Staff Deck. Hire 1 (paying normal token cost) into an open staff slot. Return 2 to bottom.',
+      type: 'gain_two_distinct',
+      description: 'Direct Order: Take 2 tokens of DIFFERENT types from Hoppers.',
     },
   },
   {
-    id: 'dept_maintenance_shop',
+    id: 'dept_farm_swap',
     departmentNumber: 4,
-    name: 'Equipment Maintenance Shop',
-    subtitle: 'Machinery Upgrades & Tooling',
-    category: 'engineering',
-    flavorText: 'Steam valves, heat exchangers, and drive belts require obsessive preventive maintenance.',
-    imagePath: '/upgrades/equip-automated-canning.jpg',
-    iconName: 'Wrench',
+    physicalCardNumber: 2,
+    side: 'B',
+    flipSideId: 'dept_sourcing_desk',
+    name: 'Farm Swap',
+    subtitle: 'Agricultural Exchange',
+    category: 'logistics',
+    flavorText: 'Local dairy and hog farmers haul away warm spent mash, trading regional specialties in return.',
+    imagePath: '/zones/zone-5-dock.jpg',
+    tokenGraphic: '/tokens/grain-wood-piece.png',
+    iconName: 'Repeat',
     actionEffect: {
-      type: 'draft_equipment_top3',
-      description: 'Look at the top 3 cards of the Equipment Deck. Install 1 (paying normal token cost) into an open equipment slot. Return 2 to bottom.',
+      type: 'farm_swap',
+      description: 'Farmer Barter: Trade 1 token from Warehouse for any 2 tokens.',
     },
   },
-  {
-    id: 'dept_rd_desk',
-    departmentNumber: 5,
-    name: "Master Brewer's R&D Desk",
-    subtitle: 'Pilot Batch Lab & Recipe Design',
-    category: 'production',
-    flavorText: "Sean Hoyne's formulation notebook: where wild fermentation concepts become flagship ales.",
-    imagePath: '/recipes/hoyne-pilsner.jpg',
-    iconName: 'FlaskConical',
-    actionEffect: {
-      type: 'draft_recipe_top3',
-      description: 'Look at the top 3 Recipe cards. Brew 1 immediately into Zone 1 Warehouse with a -1 Token Discount (any 1 ingredient waived). Return 2 to bottom.',
-    },
-  },
+
+  // --- CARD 3: RAW BULK INGREDIENTS ---
   {
     id: 'dept_grain_silo',
-    departmentNumber: 6,
-    name: 'The Grain Silo & Mill',
-    subtitle: 'Bulk Malt Storage & Grist Intake',
+    departmentNumber: 5,
+    physicalCardNumber: 3,
+    side: 'A',
+    flipSideId: 'dept_hop_locker',
+    name: 'Grain Silo',
+    subtitle: 'Bulk Malt Storage',
     category: 'logistics',
     flavorText: 'Tonnes of British Columbian two-row malt standing ready for the morning mash-in.',
     imagePath: '/zones/zone-1-grain-warehouse.jpg',
+    tokenGraphic: '/tokens/grain-wood-piece.png',
     iconName: 'Wheat',
     passiveEffect: {
       type: 'grain_buffer',
@@ -2522,17 +2535,21 @@ export const BREWERY_DEPARTMENT_DEFINITIONS: BreweryDepartmentCard[] = [
     },
     actionEffect: {
       type: 'gain_grain',
-      description: 'Mill Grist: Take 2 Grain tokens from Central Hoppers into your Warehouse.',
+      description: 'Mill Grist: Take 2 Grain tokens from Central Hoppers into Warehouse.',
     },
   },
   {
     id: 'dept_hop_locker',
-    departmentNumber: 7,
-    name: 'The Hop Cold Locker',
-    subtitle: 'Cryo-Pellet Vault & Aroma Stash',
+    departmentNumber: 6,
+    physicalCardNumber: 3,
+    side: 'B',
+    flipSideId: 'dept_grain_silo',
+    name: 'Hop Locker',
+    subtitle: 'Cryo-Pellet Vault',
     category: 'sourcing',
     flavorText: 'Sub-zero vacuum-sealed nitrogen pouches preserving delicate lupulin oils and volatile aromas.',
-    imagePath: '/zones/zone-4-conditioning.jpg',
+    imagePath: '/upgrades/cryo-hop-storage.jpg',
+    tokenGraphic: '/tokens/hops-wood-piece.png',
     iconName: 'Snowflake',
     passiveEffect: {
       type: 'hops_buffer',
@@ -2542,45 +2559,23 @@ export const BREWERY_DEPARTMENT_DEFINITIONS: BreweryDepartmentCard[] = [
     },
     actionEffect: {
       type: 'gain_hops_wild',
-      description: 'Draft Cryo Hops: Take 1 Hops token + 1 token of ANY ingredient from Central Hoppers.',
+      description: 'Draft Cryo: Take 1 Hops + 1 Wild token from Central Hoppers.',
     },
   },
-  {
-    id: 'dept_sourcing_desk',
-    departmentNumber: 8,
-    name: 'The Sourcing Desk',
-    subtitle: 'Bespoke Ingredient Purchasing',
-    category: 'sourcing',
-    flavorText: 'Direct grower relations secure premier lot allocations from the Fraser Valley to Saaz.',
-    imagePath: '/board/rotary-dial-artwork.jpg',
-    iconName: 'ClipboardCheck',
-    actionEffect: {
-      type: 'gain_two_distinct',
-      description: 'Direct Supplier Order: Take any 2 tokens from Central Hoppers, must be two DIFFERENT ingredient types.',
-    },
-  },
-  {
-    id: 'dept_farm_swap',
-    departmentNumber: 9,
-    name: 'Spent Grain Farm Swap',
-    subtitle: 'Local Agricultural Exchange',
-    category: 'logistics',
-    flavorText: 'Local dairy and hog farmers haul away warm spent mash, trading regional specialties in return.',
-    imagePath: '/zones/zone-5-dock.jpg',
-    iconName: 'Repeat',
-    actionEffect: {
-      type: 'farm_swap',
-      description: 'Farmer Barter: Return 1 token from Warehouse to Central Hoppers ➔ Take any 2 tokens of your choice (Net +1 token).',
-    },
-  },
+
+  // --- CARD 4: YEAST CULTURE & FORMULATION ---
   {
     id: 'dept_yeast_bank',
-    departmentNumber: 10,
-    name: 'Yeast Propagation Bank',
-    subtitle: 'House Strain Culture Library',
+    departmentNumber: 7,
+    physicalCardNumber: 4,
+    side: 'A',
+    flipSideId: 'dept_rd_desk',
+    name: 'Yeast Bank',
+    subtitle: 'Strain Library',
     category: 'sourcing',
     flavorText: 'Cryogenic glycerol stocks preserve pure Saccharomyces and Brettanomyces generations.',
-    imagePath: '/zones/zone-3-cellar.jpg',
+    imagePath: '/upgrades/staff-yeast-propagator.jpg',
+    tokenGraphic: '/tokens/yeast-wood-piece.png',
     iconName: 'Dna',
     passiveEffect: {
       type: 'yeast_buffer',
@@ -2590,13 +2585,178 @@ export const BREWERY_DEPARTMENT_DEFINITIONS: BreweryDepartmentCard[] = [
     },
     actionEffect: {
       type: 'yeast_swap',
-      description: 'Harvest & Propagate: Take 1 Yeast token from Central Hoppers, and you may swap 1 token in Warehouse for 1 token in Central Hoppers.',
+      description: 'Harvest: Take 1 Yeast token + optional 1:1 token swap.',
+    },
+  },
+  {
+    id: 'dept_rd_desk',
+    departmentNumber: 8,
+    physicalCardNumber: 4,
+    side: 'B',
+    flipSideId: 'dept_yeast_bank',
+    name: 'R&D Lab',
+    subtitle: 'Pilot Batch Lab',
+    category: 'production',
+    flavorText: "Sean Hoyne's formulation notebook: where wild fermentation concepts become flagship ales.",
+    imagePath: '/upgrades/staff-brewhouse-chemist.jpg',
+    tokenGraphic: '/tokens/yeast-wood-piece.png',
+    iconName: 'FlaskConical',
+    actionEffect: {
+      type: 'draft_recipe_top3',
+      description: 'Pilot Lab: Brew top Recipe with -1 Token Discount.',
+    },
+  },
+
+  // --- CARD 5: INFRASTRUCTURE & TALENT ---
+  {
+    id: 'dept_maintenance_shop',
+    departmentNumber: 9,
+    physicalCardNumber: 5,
+    side: 'A',
+    flipSideId: 'dept_hr_office',
+    name: 'Maintenance',
+    subtitle: 'Machinery Upgrades',
+    category: 'engineering',
+    flavorText: 'Steam valves, heat exchangers, and drive belts require obsessive preventive maintenance.',
+    imagePath: '/upgrades/rotary-canning-line.jpg',
+    tokenGraphic: '/tokens/grain-wood-piece.png',
+    iconName: 'Wrench',
+    actionEffect: {
+      type: 'draft_equipment_top3',
+      description: 'Overhaul: Look at top 3 Equipment cards, install 1.',
+    },
+  },
+  {
+    id: 'dept_hr_office',
+    departmentNumber: 10,
+    physicalCardNumber: 5,
+    side: 'B',
+    flipSideId: 'dept_maintenance_shop',
+    name: 'HR Office',
+    subtitle: 'Talent Acquisition',
+    category: 'personnel',
+    flavorText: 'Great beer is brewed by great people. Find the right hands for the cellar floor.',
+    imagePath: '/upgrades/staff-brand-ambassador.jpg',
+    tokenGraphic: '/tokens/hops-wood-piece.png',
+    iconName: 'Users',
+    actionEffect: {
+      type: 'draft_staff_top3',
+      description: 'Recruit: Look at top 3 Staff cards, hire 1.',
+    },
+  },
+
+  // --- CARD 6: QUALITY ASSURANCE & SPECIALTY CELLARING ---
+  {
+    id: 'dept_qa_lab',
+    departmentNumber: 11,
+    physicalCardNumber: 6,
+    side: 'A',
+    flipSideId: 'dept_oak_cellar',
+    name: 'QA Testing',
+    subtitle: 'Assay Testing',
+    category: 'engineering',
+    flavorText: 'Dissolved oxygen assays and microbiological testing guarantee peak cellar freshness and bottle conditioning.',
+    imagePath: '/upgrades/staff-qa-lead.jpg',
+    tokenGraphic: '/tokens/yeast-wood-piece.png',
+    iconName: 'Shield',
+    actionEffect: {
+      type: 'qa_lab_inspect',
+      description: 'QA Assay: Take 1 token + advance 1 batch 1 zone forward.',
+    },
+  },
+  {
+    id: 'dept_oak_cellar',
+    departmentNumber: 12,
+    physicalCardNumber: 6,
+    side: 'B',
+    flipSideId: 'dept_qa_lab',
+    name: 'Oak Cellar',
+    subtitle: 'Wild Ale Maturation',
+    category: 'production',
+    flavorText: 'French oak foudres slowly mature Brettanomyces and wild ales, infusing deep vanilla, tannin, and fruit complexity.',
+    imagePath: '/upgrades/oak-aging-foeder.jpg',
+    tokenGraphic: '/tokens/chocolate-wood-piece.png',
+    iconName: 'Sparkles',
+    actionEffect: {
+      type: 'oak_cellar_maturation',
+      description: 'Maturation: Take 1 Specialty token (Choc/Spice/Fruit).',
     },
   },
 ];
 
+export const DOUBLE_SIDED_DEPARTMENT_CARDS: DoubleSidedDepartmentCard[] = [
+  {
+    id: 'dept_card_1',
+    cardNumber: 1,
+    name: 'Card 1: Shift Operations',
+    sideA: BREWERY_DEPARTMENT_DEFINITIONS[0], // #1 The Night Shift
+    sideB: BREWERY_DEPARTMENT_DEFINITIONS[1], // #2 The Taproom
+    activeSide: 'A',
+  },
+  {
+    id: 'dept_card_2',
+    cardNumber: 2,
+    name: 'Card 2: Sourcing & Barter',
+    sideA: BREWERY_DEPARTMENT_DEFINITIONS[2], // #3 The Sourcing Desk
+    sideB: BREWERY_DEPARTMENT_DEFINITIONS[3], // #4 Spent Grain Farm Swap
+    activeSide: 'A',
+  },
+  {
+    id: 'dept_card_3',
+    cardNumber: 3,
+    name: 'Card 3: Raw Ingredients',
+    sideA: BREWERY_DEPARTMENT_DEFINITIONS[4], // #5 The Grain Silo & Mill
+    sideB: BREWERY_DEPARTMENT_DEFINITIONS[5], // #6 The Hop Cold Locker
+    activeSide: 'A',
+  },
+  {
+    id: 'dept_card_4',
+    cardNumber: 4,
+    name: 'Card 4: Culture & Innovation',
+    sideA: BREWERY_DEPARTMENT_DEFINITIONS[6], // #7 Yeast Propagation Bank
+    sideB: BREWERY_DEPARTMENT_DEFINITIONS[7], // #8 Master Brewer's R&D Desk
+    activeSide: 'A',
+  },
+  {
+    id: 'dept_card_5',
+    cardNumber: 5,
+    name: 'Card 5: Infrastructure & Talent',
+    sideA: BREWERY_DEPARTMENT_DEFINITIONS[8], // #9 Equipment Maintenance Shop
+    sideB: BREWERY_DEPARTMENT_DEFINITIONS[9], // #10 Human Resources Office
+    activeSide: 'A',
+  },
+  {
+    id: 'dept_card_6',
+    cardNumber: 6,
+    name: 'Card 6: Quality & Specialty Aging',
+    sideA: BREWERY_DEPARTMENT_DEFINITIONS[10], // #11 Quality Assurance Lab
+    sideB: BREWERY_DEPARTMENT_DEFINITIONS[11], // #12 Oak Barrel Foeder Cellar
+    activeSide: 'A',
+  },
+];
+
 /**
- * Creates a fresh, deep-cloned copy of the 10-card Brewery Department Deck.
+ * Creates a fresh deep-cloned deck of the 6 physical Double-Sided Department Cards.
+ */
+export function createDoubleSidedDepartmentDeck(): DoubleSidedDepartmentCard[] {
+  return DOUBLE_SIDED_DEPARTMENT_CARDS.map((card) => ({
+    ...card,
+    sideA: {
+      ...card.sideA,
+      passiveEffect: card.sideA.passiveEffect ? { ...card.sideA.passiveEffect } : undefined,
+      actionEffect: { ...card.sideA.actionEffect },
+    },
+    sideB: {
+      ...card.sideB,
+      passiveEffect: card.sideB.passiveEffect ? { ...card.sideB.passiveEffect } : undefined,
+      actionEffect: { ...card.sideB.actionEffect },
+    },
+    activeSide: 'A',
+  }));
+}
+
+/**
+ * Creates a fresh, deep-cloned copy of the Brewery Department Deck.
  */
 export function createDepartmentDeck(): BreweryDepartmentCard[] {
   return BREWERY_DEPARTMENT_DEFINITIONS.map((dept) => ({
