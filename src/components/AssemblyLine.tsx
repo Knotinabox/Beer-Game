@@ -547,7 +547,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
         <div className="w-full flex flex-col xl:flex-row items-center gap-3.5">
           {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse) */}
           {inspectedPlayer.departmentCard && (
-            <div className="shrink-0 flex flex-col justify-center items-center relative w-[116px] sm:w-[124px] xl:w-[130px]">
+            <div className="shrink-0 flex flex-col justify-center items-center relative w-[128px] sm:w-[136px] xl:w-[144px]">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="text-[10px] font-sans font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-amber-400" />
@@ -647,7 +647,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
               ============================================================= */}
               <div
                 data-player-mat="11.5x5.75-borderless-canvas"
-                className="w-full aspect-[1024/420] min-h-[190px] sm:min-h-[210px] lg:min-h-[230px] max-h-[285px] flex flex-col justify-between rounded-2xl relative shadow-2xl border-2 border-amber-600/70 overflow-hidden bg-[#140E0A] z-10"
+                className="w-full aspect-[11.5/5.75] min-h-[280px] sm:min-h-[310px] lg:min-h-[340px] flex flex-col justify-between rounded-2xl relative shadow-2xl border-2 border-amber-600/70 overflow-hidden bg-[#140E0A] z-10"
               >
                 {/* THE SEAMLESS 5-ZONE PANORAMIC BREWERY MAT BACKGROUND */}
                 <img

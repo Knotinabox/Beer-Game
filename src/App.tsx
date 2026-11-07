@@ -341,7 +341,7 @@ function MainAppContent() {
 
         <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full">
           {/* COLUMN 1 (LEFT): THE GAMEBOARD (Rotary Brewhouse Dial - Moved to Far Left) */}
-          <div className="w-full lg:w-[580px] xl:w-[620px] 2xl:w-[660px] shrink-0 flex flex-col">
+          <div className="w-full lg:w-[740px] xl:w-[800px] 2xl:w-[840px] shrink-0 flex flex-col">
             <div className="stout-panel rounded-2xl p-2 sm:p-2.5 border-hoyne-copper/70 shadow-2xl w-full h-full flex flex-col justify-between">
               {gameState.rotaryBoard ? (
                 <RotaryBoard
@@ -369,7 +369,7 @@ function MainAppContent() {
             <div className="flex flex-col xl:flex-row items-stretch gap-2.5 w-full">
               {/* Table Side Dashboard */}
               <TableSideColumn
-                className="w-full xl:w-[480px] 2xl:w-[520px] shrink-0"
+                className="w-full xl:w-[410px] 2xl:w-[440px] shrink-0"
                 gameState={gameState}
                 inspectedPlayerIndex={inspectedPlayerIndex}
                 onSelectPlayerIndex={setInspectedPlayerIndex}
