@@ -548,9 +548,9 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
 
         {/* 11.5" x 5.0" BOARD & DOCKED PERSONAL BREWERY DEPARTMENT (6 Double-Sided Cards • 12 Actions) */}
         <div className="w-full flex flex-col xl:flex-row items-center gap-3">
-          {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse, scaled down ~15%) */}
+          {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse, scaled down 20%) */}
           {inspectedPlayer.departmentCard && (
-            <div className="shrink-0 flex flex-col justify-center items-center relative w-[104px] sm:w-[110px] xl:w-[115px]">
+            <div className="shrink-0 flex flex-col justify-center items-center relative w-[84px] sm:w-[88px] xl:w-[92px]">
               {/* Sleek Double-Sided Card Flip Button */}
               {inspectedPlayer.departmentCardPhysical && (
                 <button

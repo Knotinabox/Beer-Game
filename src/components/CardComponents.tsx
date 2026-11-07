@@ -2900,13 +2900,14 @@ export interface MixerPackCardViewProps {
   activePlayer?: PlayerState;
   compact?: boolean;
   disableInspectTrigger?: boolean;
+  layoutVariant?: 'landscape' | 'portrait';
 }
 
 /**
  * ============================================================================
  * MIXER PACK CARD VIEW (Art-Dominant Tabletop Bounty Card)
  * Features large, prominent 3D Hoyne Mixer Pack packaging art with clean 4-pip
- * collection indicators. Click anywhere to inspect the full requirements dossier!
+ * collection indicators. Supports authentic horizontal 'landscape' mode!
  * ============================================================================
  */
 export const MixerPackCardView: React.FC<MixerPackCardViewProps> = ({
@@ -2915,6 +2916,7 @@ export const MixerPackCardView: React.FC<MixerPackCardViewProps> = ({
   activePlayer,
   compact = false,
   disableInspectTrigger = false,
+  layoutVariant = 'landscape',
 }) => {
   const isClaimed = Boolean(card.claimedByPlayerId);
   const { inspectCard, setHoveredCard } = useCardInspector();
@@ -3043,6 +3045,130 @@ export const MixerPackCardView: React.FC<MixerPackCardViewProps> = ({
               </span>
             ) : (
               <span className="text-[9px] font-sans text-stone-400 group-hover:text-amber-200 transition-colors flex items-center gap-0.5">
+                <span>Inspect</span>
+                <ChevronRight className="w-2.5 h-2.5" />
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Dedicated Horizontal Landscape Mode for Public Bounties
+  if (layoutVariant === 'landscape') {
+    return (
+      <div
+        ref={cardRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleInspect}
+        data-card-type="mixer-pack"
+        className={`group relative rounded-2xl border-2 transition-all select-none overflow-hidden flex flex-row items-stretch p-2 w-full min-h-[100px] sm:min-h-[108px] max-h-[125px] ${
+          !disableInspectTrigger ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-2xl' : ''
+        } ${
+          isClaimed
+            ? 'bg-stone-950/85 border-stone-800 opacity-75'
+            : isReadyToClaim
+            ? 'bg-gradient-to-r from-[#24170D] via-[#1E120A] to-[#120B07] border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.55)] ring-2 ring-amber-400'
+            : 'bg-gradient-to-r from-[#1A120B] via-[#160E08] to-[#0E0A07] border-amber-600/50 hover:border-amber-400/90 shadow-xl'
+        }`}
+        style={{
+          boxShadow: isReadyToClaim
+            ? '0 10px 24px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(254, 240, 138, 0.3)'
+            : '0 6px 18px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(200, 125, 50, 0.25)',
+        }}
+        title="Click to view full recipe requirements and collection status"
+      >
+        {/* Left: 3D Box Hero Art */}
+        <div className="relative w-[70px] sm:w-[80px] shrink-0 rounded-xl overflow-hidden bg-black/60 border border-amber-900/50 flex items-center justify-center p-1 shadow-inner group/art">
+          <div
+            className="absolute inset-0 opacity-40 pointer-events-none transition-opacity duration-300 group-hover/art:opacity-75"
+            style={{
+              backgroundImage:
+                'radial-gradient(ellipse at 50% 50%, rgba(245, 158, 11, 0.35) 0%, transparent 70%)',
+            }}
+          />
+          <img
+            src={card.imagePath}
+            alt={card.name}
+            className="w-full h-full object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.95)] transition-all duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+          {!disableInspectTrigger && (
+            <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-1 backdrop-blur-[1px]">
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/95 text-stone-950 text-[8px] font-sans font-black uppercase tracking-wider shadow flex items-center gap-0.5">
+                <Eye className="w-2.5 h-2.5" />
+                <span>Inspect</span>
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Info, Requirements, Status */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between pl-2">
+          {/* Top Line */}
+          <div>
+            <div className="flex items-center justify-between gap-1 mb-0.5">
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 border border-amber-400/40 text-[7.5px] font-mono font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                <Package className="w-2.5 h-2.5 text-amber-400" />
+                <span>Bounty</span>
+              </span>
+              <div
+                className="flex items-center gap-1 px-1.5 py-0.2 rounded-lg border border-amber-200/90 shadow-md"
+                style={{
+                  background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%)',
+                  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                }}
+              >
+                <Trophy className="w-2.5 h-2.5 text-stone-950 fill-stone-950 shrink-0" />
+                <span className="font-serif font-black text-[10px] text-stone-950 tracking-wider whitespace-nowrap">
+                  +{card.vp} VP
+                </span>
+              </div>
+            </div>
+            <h3 className="font-serif font-black text-xs text-amber-100 tracking-wide truncate drop-shadow-sm group-hover:text-amber-200 transition-colors">
+              {card.name}
+            </h3>
+          </div>
+
+          {/* 4 Required Beers Grid */}
+          <div className="grid grid-cols-2 gap-1 py-0.5">
+            {recipeChecks.map((check, idx) => (
+              <div
+                key={idx}
+                className={`flex items-center gap-1 px-1 py-0.5 rounded text-[7.5px] font-mono truncate transition-all ${
+                  check.isDone
+                    ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-300'
+                    : 'bg-black/40 border border-stone-800 text-stone-400'
+                }`}
+                title={`${check.req}: ${check.isDone ? 'Brewed & Delivered' : 'Still Needed'}`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    check.isDone
+                      ? 'bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.9)]'
+                      : 'bg-stone-600'
+                  }`}
+                />
+                <span className="truncate">{check.meta.short || check.req}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Line */}
+          <div className="pt-0.5 border-t border-amber-900/40 flex items-center justify-between text-[7.5px]">
+            <span className="font-mono font-bold text-amber-200">
+              {completedCount}/4 Brewed
+            </span>
+            {isClaimed ? (
+              <span className="text-stone-400 font-bold truncate">Claimed</span>
+            ) : isReadyToClaim ? (
+              <span className="text-amber-300 font-black uppercase tracking-wider animate-pulse flex items-center gap-0.5">
+                <Sparkles className="w-2.5 h-2.5" /> Claim!
+              </span>
+            ) : (
+              <span className="text-stone-400 group-hover:text-amber-200 flex items-center gap-0.5">
                 <span>Inspect</span>
                 <ChevronRight className="w-2.5 h-2.5" />
               </span>

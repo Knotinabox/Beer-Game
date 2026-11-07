@@ -32,10 +32,35 @@ describe('Personal Brewery Departments Visual Verification', () => {
       await page.waitForTimeout(300);
     }
 
-    // 1. Capture tabletop with scaled-up market dial and scaled-down player board
-    console.log('2. Capturing tabletop with departments enabled (scaled market & board)...');
+    // 1. Verify default startup without department cards (Optional module is OFF by default)
+    console.log('2. Verifying default startup without departments...');
+    const initialDeptCount = await page.locator('[data-department-card]').count();
+    console.log('Initial department cards count (expected 0):', initialDeptCount);
+
+    // Capture default tabletop at 1920x1080 with landscape bounties and 20% scaled-down board
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.waitForTimeout(400);
+    const table1080Path = path.join(ARTIFACT_DIR, 'tabletop_1080p.png');
+    await page.screenshot({ path: table1080Path });
+    console.log('Saved 1080p tabletop:', table1080Path);
+
+    // Capture default tabletop at 1536x950
+    await page.setViewportSize({ width: 1536, height: 950 });
+    await page.waitForTimeout(400);
+    const table1536Path = path.join(ARTIFACT_DIR, 'tabletop_1536p.png');
+    await page.screenshot({ path: table1536Path });
+    console.log('Saved 1536p tabletop:', table1536Path);
+
+    // 2. Toggle ON the optional Personal Departments module to test expansion mode
+    console.log('3. Toggling ON optional Personal Departments module...');
+    const deptsCheckbox = page.locator('label:has-text("Depts") input[type="checkbox"]');
+    if ((await deptsCheckbox.count()) > 0 && !(await deptsCheckbox.isChecked())) {
+      await deptsCheckbox.check();
+      await page.waitForTimeout(500);
+    }
+
     const deptCard = page.locator('[data-department-card]').first();
-    await deptCard.waitFor({ state: 'visible', timeout: 10000 });
+    await deptCard.waitFor({ state: 'visible', timeout: 5000 });
 
     // Capture closeup of docked department card (Side A)
     const cardSideAPath = path.join(ARTIFACT_DIR, 'department_card_side_a.png');
@@ -52,20 +77,6 @@ describe('Personal Brewery Departments Visual Verification', () => {
       await deptCard.screenshot({ path: cardSideBPath });
       console.log('Saved Side B closeup:', cardSideBPath);
     }
-
-    // Capture tabletop at 1920x1080 (100% scaling)
-    await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.waitForTimeout(400);
-    const table1080Path = path.join(ARTIFACT_DIR, 'tabletop_1080p.png');
-    await page.screenshot({ path: table1080Path });
-    console.log('Saved 1080p tabletop:', table1080Path);
-
-    // Capture tabletop at 1536x864 (125% scaling)
-    await page.setViewportSize({ width: 1536, height: 950 });
-    await page.waitForTimeout(400);
-    const table1536Path = path.join(ARTIFACT_DIR, 'tabletop_1536p.png');
-    await page.screenshot({ path: table1536Path });
-    console.log('Saved 1536p tabletop:', table1536Path);
 
     const tableWithDeptPath = path.join(ARTIFACT_DIR, 'tabletop_with_department_placed.png');
     await page.screenshot({ path: tableWithDeptPath });
@@ -119,6 +130,18 @@ describe('Personal Brewery Departments Visual Verification', () => {
     const boardNoDeptPath = path.join(ARTIFACT_DIR, 'board_without_departments.png');
     await boardLocator.screenshot({ path: boardNoDeptPath });
     console.log('Saved:', boardNoDeptPath);
+
+    // 5. Test opening Online Multiplayer with Friends modal
+    console.log('7. Opening Play Online with Friends modal...');
+    const onlineBtn = page.locator('button:has-text("Play Online with Friends")').first();
+    await onlineBtn.click();
+    await page.waitForTimeout(500);
+
+    const multiplayerModal = page.locator('.fixed.inset-0 .stout-panel:has-text("Play Online with Friends")').first();
+    await multiplayerModal.waitFor({ state: 'visible', timeout: 5000 });
+    const onlineModalPath = path.join(ARTIFACT_DIR, 'online_multiplayer_modal.png');
+    await multiplayerModal.screenshot({ path: onlineModalPath });
+    console.log('Saved:', onlineModalPath);
 
     await browser.close();
   }, 35000);

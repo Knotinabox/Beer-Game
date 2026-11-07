@@ -22,6 +22,7 @@ import {
   ArrowRight,
   Printer,
   Building2,
+  Globe,
 } from 'lucide-react';
 
 export interface TableSideColumnProps {
@@ -37,6 +38,7 @@ export interface TableSideColumnProps {
   onOpenUpgradeGallery: () => void;
   onOpenPdfExport?: (type?: 'all' | 'rules' | 'recipes' | 'upgrades') => void;
   onOpenSetup: () => void;
+  onOpenMultiplayer?: () => void;
   onRunMorningShift: () => void;
   onDiscardToken?: (taxonomy: IngredientTaxonomy) => void;
   onOpenLocationsModal?: () => void;
@@ -66,6 +68,7 @@ export const TableSideColumn: React.FC<TableSideColumnProps> = ({
   onOpenUpgradeGallery,
   onOpenPdfExport,
   onOpenSetup,
+  onOpenMultiplayer,
   onRunMorningShift,
   onDiscardToken,
   onOpenLocationsModal,
@@ -364,10 +367,10 @@ export const TableSideColumn: React.FC<TableSideColumnProps> = ({
               </label>
 
               {onToggleDepartments && (
-                <label className="flex-1 flex items-center gap-1.5 text-[10px] font-sans text-hoyne-cream/90 bg-stone-900/90 px-2 py-1 rounded-lg border border-hoyne-copper/30 cursor-pointer hover:border-amber-400/60 transition" title="Toggle Personal Brewery Department Cards (#1–#10) on/off">
+                <label className="flex-1 flex items-center gap-1.5 text-[10px] font-sans text-hoyne-cream/90 bg-stone-900/90 px-2 py-1 rounded-lg border border-hoyne-copper/30 cursor-pointer hover:border-amber-400/60 transition" title="Toggle Optional Personal Brewery Department Cards on/off">
                   <input
                     type="checkbox"
-                    checked={gameState.enableDepartments !== false}
+                    checked={Boolean(gameState.enableDepartments)}
                     onChange={(e) => onToggleDepartments(e.target.checked)}
                     className="accent-amber-500 w-3 h-3 rounded"
                   />
@@ -398,6 +401,17 @@ export const TableSideColumn: React.FC<TableSideColumnProps> = ({
                 </div>
               )}
             </div>
+
+            {onOpenMultiplayer && (
+              <button
+                type="button"
+                onClick={onOpenMultiplayer}
+                className="w-full py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-600 hover:to-teal-600 text-white font-display font-black text-[10.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-lg border border-emerald-400/50 hover:scale-[1.01] transition-all"
+              >
+                <Globe className="w-3.5 h-3.5 text-emerald-200 animate-pulse" />
+                <span>Play Online with Friends</span>
+              </button>
+            )}
 
             <button
               type="button"

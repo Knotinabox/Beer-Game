@@ -1022,8 +1022,8 @@ export function createInitialGameState(config: {
   const mixerDeck: MixerPackCard[] = allMixerCards;
   const mixerDiscard: MixerPackCard[] = [];
 
-  // Deck 4: 6 Double-Sided Brewery Department Cards (Deal 1 unique double-sided card to each player)
-  const enableDepartments = config.enableDepartments !== false;
+  // Deck 4: 6 Double-Sided Brewery Department Cards (Optional expansion module; defaults to OFF)
+  const enableDepartments = Boolean(config.enableDepartments);
   let doubleSidedDeck = shuffleArray(createDoubleSidedDepartmentDeck(), rng);
   let departmentDeck = shuffleArray(createDepartmentDeck(), rng);
   const departmentDiscard: BreweryDepartmentCard[] = [];

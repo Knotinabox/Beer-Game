@@ -7,19 +7,20 @@ import { RecipeLabelCanvas } from './HoyneAssets';
 export interface BrewedRecipePileCardProps {
   player: PlayerState;
   targetBatches: number;
+  layoutVariant?: 'landscape' | 'portrait';
 }
 
 /**
  * ============================================================================
  * BREWED RECIPE PILE CARD (5th Card Slot in Tabletop Row)
- * Actual card size matching Mixer Pack cards (aspect-[9/14], ~230-250px tall).
- * Renders as a 3D physical card deck/pile of delivered brews with authentic can art,
- * batch navigation (< 1 of 3 >), and full click-to-inspect tasting dossier integration.
+ * Actual card size matching Mixer Pack cards. Supports authentic horizontal
+ * 'landscape' mode to sit flush with landscape mixer pack bounties!
  * ============================================================================
  */
 export const BrewedRecipePileCard: React.FC<BrewedRecipePileCardProps> = ({
   player,
   targetBatches,
+  layoutVariant = 'landscape',
 }) => {
   const { inspectCard } = useCardInspector();
   const deliveredRecipes: RecipeCard[] =
@@ -57,6 +58,48 @@ export const BrewedRecipePileCard: React.FC<BrewedRecipePileCardProps> = ({
 
   // 1. EMPTY PILE STATE: Card-sized tactile drop slot
   if (deliveredRecipes.length === 0) {
+    if (layoutVariant === 'landscape') {
+      return (
+        <div
+          data-card-type="brewed-recipe-pile"
+          className="rounded-2xl border-2 border-dashed border-amber-600/50 bg-gradient-to-r from-[#18100A]/95 via-[#120B07] to-[#0A0704] p-2 flex flex-row items-stretch select-none relative shadow-xl overflow-hidden min-h-[100px] sm:min-h-[108px] max-h-[125px] w-full"
+        >
+          {/* Left: Empty Slot Visual */}
+          <div className="w-[70px] sm:w-[80px] shrink-0 rounded-xl border border-dashed border-amber-500/30 bg-black/45 flex flex-col items-center justify-center text-center p-1.5 shadow-inner">
+            <div className="w-8 h-8 rounded-full border border-dashed border-amber-400/40 flex items-center justify-center bg-amber-950/40 mb-1">
+              <Truck className="w-4 h-4 text-emerald-400/80" />
+            </div>
+            <span className="text-[7.5px] font-mono text-stone-400">Empty Slot</span>
+          </div>
+
+          {/* Right: Info */}
+          <div className="flex-1 min-w-0 flex flex-col justify-between pl-2">
+            <div>
+              <div className="flex items-center justify-between gap-1 mb-0.5">
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 border border-amber-400/40 text-[7.5px] font-mono font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                  <Trophy className="w-2.5 h-2.5 text-amber-400" />
+                  <span>Trophy Pile</span>
+                </span>
+                <span className="font-mono font-black text-[10px] text-amber-300">
+                  0/{targetBatches} Batches
+                </span>
+              </div>
+              <h3 className="font-serif font-black text-xs text-amber-200/90 tracking-wide truncate">
+                Delivered Brews Pile
+              </h3>
+            </div>
+            <p className="text-[8px] font-mono text-stone-400 leading-tight">
+              Completed brews slide off Zone 5 Packaging &amp; collect here to score Prestige VP.
+            </p>
+            <div className="pt-0.5 border-t border-amber-900/40 flex items-center justify-between text-[8px] font-mono text-stone-400">
+              <span>Prestige VP</span>
+              <span className="text-amber-300 font-bold">+0 VP</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div
         data-card-type="brewed-recipe-pile"
@@ -108,6 +151,104 @@ export const BrewedRecipePileCard: React.FC<BrewedRecipePileCardProps> = ({
   }
 
   // 2. POPULATED PILE STATE: Realistic 3D Tabletop Card Stack
+  if (layoutVariant === 'landscape') {
+    return (
+      <div className="relative w-full min-h-[100px] sm:min-h-[108px] max-h-[125px] select-none group">
+        {/* 3D Stack Layer 2 (Shadow card behind if 2+ batches) */}
+        {deliveredRecipes.length > 1 && (
+          <div className="absolute inset-0 translate-x-1.5 translate-y-1 rounded-2xl bg-amber-950/80 border border-amber-700/50 shadow-md pointer-events-none -rotate-0.5" />
+        )}
+
+        <div
+          data-card-type="brewed-recipe-pile"
+          onClick={handleInspect}
+          className="relative z-10 w-full h-full rounded-2xl border-2 border-amber-400/90 bg-gradient-to-r from-[#24170D] via-[#1A110A] to-[#0E0906] p-2 flex flex-row items-stretch cursor-pointer shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-amber-500/25"
+          title={`${activeRecipe.name} (+${activeRecipe.vp} VP) - Click to inspect Tasting Dossier`}
+        >
+          {/* Left: Hero Can Artwork */}
+          <div className="relative w-[70px] sm:w-[80px] shrink-0 rounded-xl overflow-hidden bg-black/60 border border-amber-900/50 flex items-center justify-center p-1 shadow-inner">
+            <img
+              src={activeRecipe.imagePath || activeRecipe.canArtPath}
+              alt={activeRecipe.name}
+              className="w-full h-full object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.95)]"
+              loading="lazy"
+            />
+            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-black/85 border border-amber-400/50 text-[7px] font-mono text-amber-200 font-bold whitespace-nowrap shadow">
+              #{curIdx + 1}/{deliveredRecipes.length}
+            </span>
+          </div>
+
+          {/* Right: Info and Navigation */}
+          <div className="flex-1 min-w-0 flex flex-col justify-between pl-2">
+            <div>
+              <div className="flex items-center justify-between gap-1 mb-0.5">
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-[7.5px] font-mono font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1">
+                  <Trophy className="w-2.5 h-2.5 text-amber-400" />
+                  <span>Delivered</span>
+                </span>
+                <div
+                  className="flex items-center gap-1 px-1.5 py-0.2 rounded-lg border border-amber-200/90 shadow-md"
+                  style={{
+                    background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%)',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                  }}
+                >
+                  <Trophy className="w-2.5 h-2.5 text-stone-950 fill-stone-950 shrink-0" />
+                  <span className="font-serif font-black text-[10px] text-stone-950 tracking-wider whitespace-nowrap">
+                    +{activeRecipe.vp} VP
+                  </span>
+                </div>
+              </div>
+
+              <h3 className="font-serif font-black text-xs text-amber-100 tracking-wide truncate group-hover:text-amber-200 transition-colors">
+                {activeRecipe.name}
+              </h3>
+              <div className="text-[7.5px] font-mono text-stone-400">
+                Tier {activeRecipe.tier} • {activeRecipe.style}
+              </div>
+            </div>
+
+            {/* Footer with Navigation & Action */}
+            <div className="pt-0.5 border-t border-amber-900/40 flex items-center justify-between text-[7.5px]">
+              {deliveredRecipes.length > 1 ? (
+                <div
+                  className="flex items-center gap-0.5 bg-black/80 px-1.5 py-0.5 rounded border border-amber-500/40 text-[7.5px] font-mono text-amber-200 shadow"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    className="hover:text-amber-400 p-0.5 cursor-pointer"
+                    title="Previous Brew"
+                  >
+                    <ChevronLeft className="w-2.5 h-2.5" />
+                  </button>
+                  <span className="font-bold px-0.5">
+                    {curIdx + 1}/{deliveredRecipes.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="hover:text-amber-400 p-0.5 cursor-pointer"
+                    title="Next Brew"
+                  >
+                    <ChevronRight className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              ) : (
+                <span className="text-amber-300 font-mono font-bold">1 Delivered</span>
+              )}
+              <span className="text-amber-400 font-sans font-bold flex items-center gap-0.5">
+                <span>Dossier</span>
+                <ChevronRight className="w-2.5 h-2.5" />
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-full min-h-[220px] select-none group">
       {/* 3D Stack Layer 2 (Shadow card behind if 2+ batches) */}

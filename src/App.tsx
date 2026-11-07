@@ -46,6 +46,9 @@ import { CardInspectorModal } from './components/CardInspectorModal';
 import { PdfExportModal } from './components/PdfExportModal';
 import { PdfExportType } from './utils/pdfExport';
 import { CardInspectorProvider, useCardInspector } from './context/CardInspectorContext';
+import { OnlineMultiplayerModal } from './components/OnlineMultiplayerModal';
+import { OnlineHUD } from './components/OnlineHUD';
+import { multiplayerService, NetworkLobbyState } from './engine/multiplayer';
 import {
   Play,
   FastForward,
@@ -67,14 +70,15 @@ import {
   Bot,
   Compass,
   Warehouse,
+  Globe,
 } from 'lucide-react';
 
 function getInitialEnableDepartments(): boolean {
   try {
     const saved = localStorage.getItem('hoyne_enable_departments');
-    if (saved !== null) return saved !== 'false';
+    if (saved !== null) return saved === 'true';
   } catch {}
-  return true;
+  return false;
 }
 
 function MainAppContent() {
@@ -100,6 +104,25 @@ function MainAppContent() {
   const [pdfExportType, setPdfExportType] = useState<PdfExportType | null>(null);
   const [dismissedGameOver, setDismissedGameOver] = useState<boolean>(false);
 
+  // Online Multiplayer State
+  const [activeLobby, setActiveLobby] = useState<NetworkLobbyState | null>(null);
+  const [initialRoomCode] = useState<string | null>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('room');
+    } catch {
+      return null;
+    }
+  });
+  const [showMultiplayerModal, setShowMultiplayerModal] = useState<boolean>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return Boolean(params.get('room'));
+    } catch {
+      return false;
+    }
+  });
+
   const { hoverZoomEnabled, setHoverZoomEnabled } = useCardInspector();
 
   // Setup Modal Form State
@@ -107,15 +130,21 @@ function MainAppContent() {
   const [setupHumanCount, setSetupHumanCount] = useState<number>(1);
   const [setupEnableDepartments, setSetupEnableDepartments] = useState<boolean>(getInitialEnableDepartments);
 
+  const isOnline = Boolean(activeLobby);
   const activePlayer = gameState.players[gameState.currentPlayerIndex];
-  const isHumanTurn = !activePlayer.isAI && gameState.phase !== 'GAME_OVER';
+  const isMyOnlineTurn = isOnline ? gameState.currentPlayerIndex === multiplayerService.localSlot : false;
+  const isHumanTurn = isOnline
+    ? isMyOnlineTurn && gameState.phase !== 'GAME_OVER'
+    : !activePlayer.isAI && gameState.phase !== 'GAME_OVER';
 
   // Keep inspected player synced to active human player when turn changes to a human
   useEffect(() => {
-    if (!activePlayer.isAI) {
+    if (isOnline) {
+      setInspectedPlayerIndex(multiplayerService.localSlot);
+    } else if (!activePlayer.isAI) {
       setInspectedPlayerIndex(gameState.currentPlayerIndex);
     }
-  }, [gameState.currentPlayerIndex, activePlayer.isAI]);
+  }, [gameState.currentPlayerIndex, activePlayer.isAI, isOnline]);
 
   // Reset dismissedGameOver when starting a new game
   useEffect(() => {
@@ -252,10 +281,18 @@ function MainAppContent() {
   };
 
   const handleDiscardExcess = (discardIds: string[]) => {
+    if (activeLobby && !multiplayerService.isHost) {
+      multiplayerService.sendAction('discardExcess', { discardIds });
+      return;
+    }
     setGameState((prev) => performDiscardExcess(prev, discardIds));
   };
 
   const handleDiscardToken = (taxonomy: IngredientTaxonomy) => {
+    if (activeLobby && !multiplayerService.isHost) {
+      multiplayerService.sendAction('discardToken', { taxonomy });
+      return;
+    }
     const targetPlayer = gameState.players[inspectedPlayerIndex] || gameState.players[gameState.currentPlayerIndex];
     setGameState((prev) => performDiscardToken(prev, targetPlayer.id, taxonomy));
   };
@@ -274,6 +311,15 @@ function MainAppContent() {
     chosenOption?: 'equipment' | 'staff' | 'leftWing' | 'rightWing',
     chosenPaymentTokens?: Partial<Record<IngredientTaxonomy, number>>
   ) => {
+    if (activeLobby && !multiplayerService.isHost) {
+      multiplayerService.sendAction('rotary', {
+        slotNumber,
+        actionType,
+        chosenOption,
+        chosenPaymentTokens,
+      });
+      return;
+    }
     setGameState((prev) =>
       performRotaryAction(prev, slotNumber, actionType, chosenOption, chosenPaymentTokens)
     );
@@ -284,23 +330,127 @@ function MainAppContent() {
     const totalTokens = Object.values(humanPlayer.tokens || {}).reduce((s, v) => s + (v || 0), 0);
     const cap = getWarehouseCapacity(humanPlayer);
     if (totalTokens > cap) return; // Strict enforcement: cannot end shift while over warehouse capacity
+    if (activeLobby && !multiplayerService.isHost) {
+      multiplayerService.sendAction('endOfShift');
+      return;
+    }
     setGameState((prev) => performEndOfShiftSlide(prev));
   };
 
   const handleCenterPantryAction = (ingredient: IngredientTaxonomy) => {
+    if (activeLobby && !multiplayerService.isHost) {
+      multiplayerService.sendAction('pantry', { ingredient });
+      return;
+    }
     setGameState((prev) => performCenterPantryAction(prev, ingredient));
   };
 
   const handlePlaceDepartment = (playerId: string) => {
+    if (activeLobby && !multiplayerService.isHost) {
+      multiplayerService.sendAction('placeDepartment', { playerId });
+      return;
+    }
     setGameState((prev) => performDepartmentPlacement(prev, playerId));
   };
 
   const handleExecuteDepartmentAction = (payload?: DepartmentActionPayload) => {
+    if (activeLobby && !multiplayerService.isHost) {
+      multiplayerService.sendAction('executeDepartment', payload);
+      return;
+    }
     setGameState((prev) => performDepartmentAction(prev, payload));
   };
 
   const handleFlipDepartment = useCallback((playerId: string) => {
+    if (activeLobby && !multiplayerService.isHost) {
+      multiplayerService.sendAction('flipDepartment', { playerId });
+      return;
+    }
     setGameState((prev) => flipPlayerDepartmentCard(prev, playerId));
+  }, [activeLobby]);
+
+  // Online Multiplayer Listeners & State Sync
+  useEffect(() => {
+    multiplayerService.setCallbacks({
+      onGameStart: (syncState, assignedSlot) => {
+        setGameState(syncState);
+        setInspectedPlayerIndex(assignedSlot);
+        setShowMultiplayerModal(false);
+      },
+      onStateSync: (syncState) => {
+        setGameState(syncState);
+      },
+      onActionReceived: (actionType, payload, fromSlot) => {
+        if (!multiplayerService.isHost) return;
+        switch (actionType) {
+          case 'rotary':
+            setGameState((prev) =>
+              performRotaryAction(prev, payload.slotNumber, payload.actionType, payload.chosenOption, payload.chosenPaymentTokens)
+            );
+            break;
+          case 'pantry':
+            setGameState((prev) => performCenterPantryAction(prev, payload.ingredient));
+            break;
+          case 'endOfShift':
+            setGameState((prev) => performEndOfShiftSlide(prev));
+            break;
+          case 'placeDepartment':
+            setGameState((prev) => performDepartmentPlacement(prev, payload.playerId));
+            break;
+          case 'executeDepartment':
+            setGameState((prev) => performDepartmentAction(prev, payload));
+            break;
+          case 'flipDepartment':
+            setGameState((prev) => flipPlayerDepartmentCard(prev, payload.playerId));
+            break;
+          case 'discardExcess':
+            setGameState((prev) => performDiscardExcess(prev, payload.discardIds));
+            break;
+          case 'discardToken':
+            setGameState((prev) => performDiscardToken(prev, payload.playerId, payload.taxonomy));
+            break;
+        }
+      },
+    });
+  }, []);
+
+  // Broadcast authoritative state to all peers whenever game state updates on host
+  useEffect(() => {
+    if (activeLobby && multiplayerService.isHost) {
+      multiplayerService.broadcastStateSync(gameState);
+    }
+  }, [gameState, activeLobby]);
+
+  const handleStartOnlineGame = useCallback((lobby: NetworkLobbyState) => {
+    setActiveLobby(lobby);
+    setShowMultiplayerModal(false);
+
+    if (multiplayerService.isHost) {
+      const newGame = createInitialGameState({
+        playerCount: lobby.playerCount,
+        humanCount: lobby.slots.filter((s) => s.assignedPlayer).length,
+        enableDepartments: lobby.enableDepartments,
+      });
+
+      newGame.players = newGame.players.map((p, idx) => {
+        const slot = lobby.slots[idx];
+        if (!slot) return p;
+        return {
+          ...p,
+          name: slot.assignedPlayer ? slot.assignedPlayer.name : `${slot.defaultName} (AI)`,
+          color: slot.color,
+          isAI: !slot.assignedPlayer,
+        };
+      });
+
+      setGameState(newGame);
+      multiplayerService.broadcastGameStart(newGame);
+    }
+  }, []);
+
+  const handleLeaveOnlineMatch = useCallback(() => {
+    multiplayerService.disconnect();
+    setActiveLobby(null);
   }, []);
 
   // Ranked players for scoreboard
@@ -321,6 +471,17 @@ function MainAppContent() {
           ZERO VERTICAL SCROLLING!
       =================================================================== */}
       <main className="flex-1 w-full max-w-[2560px] mx-auto p-2 sm:p-3 overflow-hidden">
+        {/* Online Multiplayer HUD Banner (Active Match) */}
+        {activeLobby && (
+          <div className="mb-2 w-full">
+            <OnlineHUD
+              lobby={activeLobby}
+              gameState={gameState}
+              onLeaveOnlineMatch={handleLeaveOnlineMatch}
+            />
+          </div>
+        )}
+
         {/* Final Round in Progress Banner (Rule 5: Equal Turns) */}
         {gameState.isFinalRound && gameState.phase !== 'GAME_OVER' && (
           <div className="mb-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-950/95 via-yellow-950/90 to-amber-950/95 border-2 border-amber-400 shadow-xl flex items-center justify-between gap-3 text-xs animate-pulse">
@@ -395,7 +556,7 @@ function MainAppContent() {
             <div className="flex flex-col min-[1700px]:flex-row items-stretch gap-2.5 w-full">
               {/* Table Side Dashboard */}
               <TableSideColumn
-                className="w-full min-[1700px]:w-[365px] shrink-0"
+                className="w-full min-[1700px]:w-[280px] shrink-0"
                 gameState={gameState}
                 inspectedPlayerIndex={inspectedPlayerIndex}
                 onSelectPlayerIndex={setInspectedPlayerIndex}
@@ -408,6 +569,7 @@ function MainAppContent() {
                 onOpenUpgradeGallery={() => setGalleryTab('upgrades')}
                 onOpenPdfExport={(type) => setPdfExportType(type || 'all')}
                 onOpenSetup={() => setShowSetupModal(true)}
+                onOpenMultiplayer={() => setShowMultiplayerModal(true)}
                 onRunMorningShift={handleRunMorningShift}
                 onDiscardToken={handleDiscardToken}
                 onOpenLocationsModal={() => setShowLocationsModal(true)}
@@ -444,9 +606,9 @@ function MainAppContent() {
                   </div>
                 </div>
 
-                {/* 5 Cards Row (Actual Size: 4 Mixer Packs + 1 Brewed Recipe Pile) */}
-                <div className="grid grid-cols-5 gap-2 items-stretch w-full mt-2">
-                  {/* 4 Active Mixer Pack Offers */}
+                {/* 5 Cards Row (All 5 in Landscape Mode: 4 Mixer Pack Bounties + 1 Brewed Recipe Pile) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 min-[2200px]:grid-cols-5 gap-2.5 items-stretch w-full mt-2">
+                  {/* 4 Active Mixer Pack Offers in Landscape Mode */}
                   {(gameState.mixerMarket || []).slice(0, 4).map((mixerCard) => (
                     <MixerPackCardView
                       key={mixerCard.id}
@@ -456,35 +618,40 @@ function MainAppContent() {
                         ...(gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []),
                       ].map((r) => r.name)}
                       activePlayer={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
-                      compact={false}
+                      layoutVariant="landscape"
                     />
                   ))}
 
-                  {/* 5th Card: Brewed Recipe Pile (Delivered Beers Stack) */}
-                  <BrewedRecipePileCard
-                    player={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
-                    targetBatches={gameState.targetBatchesToTriggerEnd}
-                  />
+                  {/* 5th Card: Brewed Recipe Pile (Delivered Beers Stack in Landscape Mode) */}
+                  <div className="col-span-1 sm:col-span-2 min-[2200px]:col-span-1">
+                    <BrewedRecipePileCard
+                      player={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
+                      targetBatches={gameState.targetBatchesToTriggerEnd}
+                      layoutVariant="landscape"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* BOTTOM RIGHT: THE BREWERY (5-Zone Assembly Line - Stretched Wide!) */}
-            <div className="w-full">
-              <AssemblyLine
-                gameState={gameState}
-                inspectedPlayerIndex={inspectedPlayerIndex}
-                onSelectPlayerIndex={setInspectedPlayerIndex}
-                onPerformDiscardExcess={handleDiscardExcess}
-                onDiscardToken={handleDiscardToken}
-                onInspectZone={(zoneId) => {
-                  setSelectedLocationId(zoneId);
-                  setShowLocationsModal(true);
-                }}
-                onPlaceDepartment={handlePlaceDepartment}
-                onExecuteDepartmentAction={handleExecuteDepartmentAction}
-                onFlipDepartment={handleFlipDepartment}
-              />
+            {/* BOTTOM RIGHT: THE BREWERY (5-Zone Assembly Line - Shrunk in scale by 20%) */}
+            <div className="w-full flex justify-center 2xl:justify-end">
+              <div className="w-full max-w-[80%]">
+                <AssemblyLine
+                  gameState={gameState}
+                  inspectedPlayerIndex={inspectedPlayerIndex}
+                  onSelectPlayerIndex={setInspectedPlayerIndex}
+                  onPerformDiscardExcess={handleDiscardExcess}
+                  onDiscardToken={handleDiscardToken}
+                  onInspectZone={(zoneId) => {
+                    setSelectedLocationId(zoneId);
+                    setShowLocationsModal(true);
+                  }}
+                  onPlaceDepartment={handlePlaceDepartment}
+                  onExecuteDepartmentAction={handleExecuteDepartmentAction}
+                  onFlipDepartment={handleFlipDepartment}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -512,22 +679,22 @@ function MainAppContent() {
               </button>
             </div>
 
-            {/* PROMINENT STARTUP MODULE SELECTOR: Personal Brewery Departments (#1–#10) */}
+            {/* PROMINENT STARTUP MODULE SELECTOR: Optional Personal Brewery Departments */}
             <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/80 via-stone-900 to-amber-950/80 border-2 border-amber-500/70 shadow-xl flex items-center justify-between gap-3">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   <span className="font-serif font-bold text-sm text-amber-200">
-                    Personal Brewery Departments (#1–#10)
+                    Personal Brewery Departments (6 Double-Sided Cards • 12 Actions)
                   </span>
                   <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider ${setupEnableDepartments ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/60' : 'bg-stone-800 text-stone-400 border border-stone-700'}`}>
-                    {setupEnableDepartments ? 'Active' : 'Disabled (Standard)'}
+                    {setupEnableDepartments ? 'Active (Expansion)' : 'Disabled (Standard Base Game)'}
                   </span>
                 </div>
                 <p className="text-[11px] text-stone-300 leading-snug">
                   {setupEnableDepartments
-                    ? 'Enabled: Each player has a private department card docked to Zone 1 Warehouse with Tier 2 shift actions & storage buffers.'
-                    : 'Disabled: Standard base game rules. No private departments; workers place exclusively on Catwalks 1–7 and Central Pantry.'}
+                    ? 'Enabled: Each player has a private double-sided department card docked to Zone 1 Warehouse with Tier 2 shift actions & storage buffers.'
+                    : 'Disabled by default: Standard classic base game rules. Workers place exclusively on Catwalks 1–7 and Central Pantry.'}
                 </p>
               </div>
               <button
@@ -697,6 +864,16 @@ function MainAppContent() {
           </div>
         </div>
       )}
+
+      {/* ===================================================================
+          ONLINE MULTIPLAYER MODAL (P2P WEBRTC LOBBY & HOST/JOIN)
+      =================================================================== */}
+      <OnlineMultiplayerModal
+        isOpen={showMultiplayerModal}
+        onClose={() => setShowMultiplayerModal(false)}
+        onStartOnlineGame={handleStartOnlineGame}
+        initialRoomCode={initialRoomCode}
+      />
 
       {/* ===================================================================
           MASTER CARD GALLERY COMPENDIUM (RECIPES & UPGRADES)

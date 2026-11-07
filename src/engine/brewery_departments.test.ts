@@ -48,8 +48,17 @@ describe('Personal Brewery Departments System (6 Double-Sided Cards • 12 Actio
     }
   });
 
-  it('deals 1 unique double-sided department card to each player at game setup', () => {
+  it('defaults to starting without department cards unless explicitly enabled', () => {
     const state = createInitialGameState({ playerCount: 4, humanCount: 1 });
+    expect(state.enableDepartments).toBe(false);
+    for (const p of state.players) {
+      expect(p.departmentCard).toBeUndefined();
+      expect(p.departmentCardPhysical).toBeUndefined();
+    }
+  });
+
+  it('deals 1 unique double-sided department card to each player at game setup when enabled', () => {
+    const state = createInitialGameState({ playerCount: 4, humanCount: 1, enableDepartments: true });
     expect(state.players).toHaveLength(4);
 
     const dealtCards = new Set<string>();
@@ -67,7 +76,7 @@ describe('Personal Brewery Departments System (6 Double-Sided Cards • 12 Actio
   });
 
   it('allows players to flip between Side A and Side B of their double-sided card', () => {
-    let state = createInitialGameState({ playerCount: 4, humanCount: 1 });
+    let state = createInitialGameState({ playerCount: 4, humanCount: 1, enableDepartments: true });
     const p1 = state.players[0];
     const originalDept = p1.departmentCard!;
     expect(p1.activeDepartmentSide).toBe('A');
