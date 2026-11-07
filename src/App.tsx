@@ -338,27 +338,9 @@ function MainAppContent() {
         )}
 
         <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full">
-          {/* COLUMN 1: SIDE DASHBOARD (Players, Token Reserve down side of dial, Controls) */}
-          <TableSideColumn
-            gameState={gameState}
-            inspectedPlayerIndex={inspectedPlayerIndex}
-            onSelectPlayerIndex={setInspectedPlayerIndex}
-            autoPlayAI={autoPlayAI}
-            setAutoPlayAI={setAutoPlayAI}
-            onStepAI={handleStepAI}
-            onSkipAI={handleFastForwardToHumanOrEnd}
-            onOpenRules={() => setShowRulesModal(true)}
-            onOpenRecipeGallery={() => setGalleryTab('recipes')}
-            onOpenUpgradeGallery={() => setGalleryTab('upgrades')}
-            onOpenPdfExport={(type) => setPdfExportType(type || 'all')}
-            onOpenSetup={() => setShowSetupModal(true)}
-            onRunMorningShift={handleRunMorningShift}
-            onDiscardToken={handleDiscardToken}
-          />
-
-          {/* COLUMN 2: THE GAMEBOARD (Rotary Brewhouse Dial - Expanded Presence) */}
-          <div className="flex-1 min-w-[520px] max-w-[720px] xl:max-w-[780px] 2xl:max-w-[840px] shrink-0 flex flex-col">
-            <div className="stout-panel rounded-2xl p-2.5 sm:p-3 border-hoyne-copper/70 shadow-2xl w-full h-full flex flex-col justify-between">
+          {/* COLUMN 1 (LEFT): THE GAMEBOARD (Rotary Brewhouse Dial - Moved to Far Left) */}
+          <div className="w-full lg:w-[520px] xl:w-[550px] 2xl:w-[580px] shrink-0 flex flex-col">
+            <div className="stout-panel rounded-2xl p-2 sm:p-2.5 border-hoyne-copper/70 shadow-2xl w-full h-full flex flex-col justify-between">
               {gameState.rotaryBoard ? (
                 <RotaryBoard
                   gameState={gameState}
@@ -379,76 +361,100 @@ function MainAppContent() {
             </div>
           </div>
 
-          {/* COLUMN 3: THE BREWERY & MIXER PACKS */}
-          <div className="flex-1 min-w-[650px] flex flex-col justify-between gap-2.5 h-full">
-            {/* 1. THE BREWERY (5-Zone Assembly Line) */}
-            <AssemblyLine
-              gameState={gameState}
-              inspectedPlayerIndex={inspectedPlayerIndex}
-              onSelectPlayerIndex={setInspectedPlayerIndex}
-              onPerformDiscardExcess={handleDiscardExcess}
-              onDiscardToken={handleDiscardToken}
-              onInspectZone={(zoneId) => {
-                setSelectedLocationId(zoneId);
-                setShowLocationsModal(true);
-              }}
-              onPlaceDepartment={handlePlaceDepartment}
-              onExecuteDepartmentAction={handleExecuteDepartmentAction}
-            />
+          {/* COLUMN 2 (RIGHT): DASHBOARD, PUBLIC BOUNTIES & EXPANDED BREWERY BOARD */}
+          <div className="flex-1 min-w-0 flex flex-col justify-between gap-2.5 h-full">
+            {/* TOP RIGHT: Side Dashboard (Turn, Players, Reference, Controls) + Public Bounties */}
+            <div className="flex flex-col xl:flex-row items-stretch gap-2.5 w-full">
+              {/* Table Side Dashboard */}
+              <TableSideColumn
+                className="w-full xl:w-[480px] 2xl:w-[520px] shrink-0"
+                gameState={gameState}
+                inspectedPlayerIndex={inspectedPlayerIndex}
+                onSelectPlayerIndex={setInspectedPlayerIndex}
+                autoPlayAI={autoPlayAI}
+                setAutoPlayAI={setAutoPlayAI}
+                onStepAI={handleStepAI}
+                onSkipAI={handleFastForwardToHumanOrEnd}
+                onOpenRules={() => setShowRulesModal(true)}
+                onOpenRecipeGallery={() => setGalleryTab('recipes')}
+                onOpenUpgradeGallery={() => setGalleryTab('upgrades')}
+                onOpenPdfExport={(type) => setPdfExportType(type || 'all')}
+                onOpenSetup={() => setShowSetupModal(true)}
+                onRunMorningShift={handleRunMorningShift}
+                onDiscardToken={handleDiscardToken}
+                onOpenLocationsModal={() => setShowLocationsModal(true)}
+              />
 
-            
-            {/* 2. PUBLIC BOUNTIES & BREWED RECIPE PILE (5 CARDS ACTUAL SIZE) */}
-            <div className="stout-panel rounded-2xl p-2.5 sm:p-3 space-y-2.5 border-2 border-amber-500/70 shadow-2xl bg-gradient-to-br from-[#1C130B] via-[#160E08] to-[#0D0805]">
-              {/* Unified Header */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hoyne-copper/30 pb-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/50 text-amber-300 text-[10px] font-display font-black uppercase tracking-wider flex items-center gap-1">
-                    <Trophy className="w-3 h-3 text-amber-400" />
-                    <span>Public Bounties &amp; Trophy Pile</span>
-                  </span>
-                  <h2 className="font-display font-bold text-sm text-hoyne-cream flex items-center gap-2 tracking-wide">
-                    Mixer Pack Bounties (4) &amp; Brewed Recipe Pile (1)
-                  </h2>
+              {/* Public Bounties & Brewed Recipe Pile (5 Cards) */}
+              <div className="flex-1 min-w-0 stout-panel rounded-2xl p-2.5 border-2 border-amber-500/70 shadow-2xl bg-gradient-to-br from-[#1C130B] via-[#160E08] to-[#0D0805] flex flex-col justify-between">
+                {/* Unified Header */}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hoyne-copper/30 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/50 text-amber-300 text-[10px] font-display font-black uppercase tracking-wider flex items-center gap-1">
+                      <Trophy className="w-3 h-3 text-amber-400" />
+                      <span>Public Bounties &amp; Trophy Pile</span>
+                    </span>
+                    <h2 className="font-display font-bold text-sm text-hoyne-cream flex items-center gap-2 tracking-wide">
+                      Mixer Pack Bounties (4) &amp; Brewed Recipe Pile (1)
+                    </h2>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 bg-black/60 border border-amber-500/40 rounded-xl px-2.5 py-1 shadow-inner">
+                      <Package className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-xs font-mono font-bold text-amber-200">
+                        {gameState.mixerDeck?.length ?? 0} in Deck
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/50 rounded-xl px-2.5 py-1 shadow-inner">
+                      <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-xs font-mono font-bold text-emerald-300">
+                        {((gameState.players[inspectedPlayerIndex]?.completedBatches || []).length + (gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []).length)}/{gameState.targetBatchesToTriggerEnd} Batches
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 bg-black/60 border border-amber-500/40 rounded-xl px-2.5 py-1 shadow-inner">
-                    <Package className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-xs font-mono font-bold text-amber-200">
-                      {gameState.mixerDeck?.length ?? 0} in Deck
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/50 rounded-xl px-2.5 py-1 shadow-inner">
-                    <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-xs font-mono font-bold text-emerald-300">
-                      {((gameState.players[inspectedPlayerIndex]?.completedBatches || []).length + (gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []).length)}/{gameState.targetBatchesToTriggerEnd} Batches
-                    </span>
-                  </div>
-                </div>
-              </div>
+                {/* 5 Cards Row (Actual Size: 4 Mixer Packs + 1 Brewed Recipe Pile) */}
+                <div className="grid grid-cols-5 gap-2 items-stretch w-full mt-2">
+                  {/* 4 Active Mixer Pack Offers */}
+                  {(gameState.mixerMarket || []).slice(0, 4).map((mixerCard) => (
+                    <MixerPackCardView
+                      key={mixerCard.id}
+                      card={mixerCard}
+                      completedRecipeNames={[
+                        ...(gameState.players[inspectedPlayerIndex]?.completedBatches || []),
+                        ...(gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []),
+                      ].map((r) => r.name)}
+                      activePlayer={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
+                      compact={true}
+                    />
+                  ))}
 
-              {/* 5 Cards Row (Actual Size: 4 Mixer Packs + 1 Brewed Recipe Pile) */}
-              <div className="grid grid-cols-5 gap-2.5 items-stretch w-full">
-                {/* 4 Active Mixer Pack Offers */}
-                {(gameState.mixerMarket || []).slice(0, 4).map((mixerCard) => (
-                  <MixerPackCardView
-                    key={mixerCard.id}
-                    card={mixerCard}
-                    completedRecipeNames={[
-                      ...(gameState.players[inspectedPlayerIndex]?.completedBatches || []),
-                      ...(gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []),
-                    ].map((r) => r.name)}
-                    activePlayer={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
-                    compact={false}
+                  {/* 5th Card: Brewed Recipe Pile (Delivered Beers Stack) */}
+                  <BrewedRecipePileCard
+                    player={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
+                    targetBatches={gameState.targetBatchesToTriggerEnd}
                   />
-                ))}
-
-                {/* 5th Card: Brewed Recipe Pile (Delivered Beers Stack) */}
-                <BrewedRecipePileCard
-                  player={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
-                  targetBatches={gameState.targetBatchesToTriggerEnd}
-                />
+                </div>
               </div>
+            </div>
+
+            {/* BOTTOM RIGHT: THE BREWERY (5-Zone Assembly Line - Stretched Wide!) */}
+            <div className="w-full">
+              <AssemblyLine
+                gameState={gameState}
+                inspectedPlayerIndex={inspectedPlayerIndex}
+                onSelectPlayerIndex={setInspectedPlayerIndex}
+                onPerformDiscardExcess={handleDiscardExcess}
+                onDiscardToken={handleDiscardToken}
+                onInspectZone={(zoneId) => {
+                  setSelectedLocationId(zoneId);
+                  setShowLocationsModal(true);
+                }}
+                onPlaceDepartment={handlePlaceDepartment}
+                onExecuteDepartmentAction={handleExecuteDepartmentAction}
+              />
             </div>
           </div>
         </div>

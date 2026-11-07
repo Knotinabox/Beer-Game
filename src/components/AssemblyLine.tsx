@@ -544,10 +544,10 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
         </div>
 
         {/* 11.5" x 5.75" BOARD & DOCKED PERSONAL BREWERY DEPARTMENT (#1 - #10) */}
-        <div className="w-full flex flex-col xl:flex-row items-stretch gap-4">
+        <div className="w-full flex flex-col xl:flex-row items-center gap-3.5">
           {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse) */}
           {inspectedPlayer.departmentCard && (
-            <div className="shrink-0 flex flex-col justify-center items-center relative">
+            <div className="shrink-0 flex flex-col justify-center items-center relative w-[130px] sm:w-[140px] xl:w-[145px]">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="text-[10px] font-sans font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-amber-400" />
@@ -557,7 +557,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
                   (Left of Zone 1)
                 </span>
               </div>
-              <div className="relative">
+              <div className="relative w-full">
                 <DepartmentCardView
                   department={inspectedPlayer.departmentCard}
                   player={inspectedPlayer}
@@ -579,8 +579,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
                   onExecuteAction={onExecuteDepartmentAction}
                 />
                 {/* Visual Brass Docking Bracket joining Department Card to Zone 1 */}
-                <div
-                  className="hidden xl:flex absolute -right-3 top-1/2 -translate-y-1/2 z-30 flex-col items-center gap-0.5"
+                <div className="hidden xl:flex absolute -right-2.5 top-1/2 -translate-y-1/2 z-30 flex-col items-center gap-0.5"
                   title="Industrial Brass Clamp docking Department Card flush to Zone 1 Warehouse"
                 >
                   <div className="w-3.5 h-6 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 rounded-sm border border-amber-300/80 shadow-lg flex items-center justify-center">

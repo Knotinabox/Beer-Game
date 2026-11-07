@@ -150,9 +150,7 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
     <>
       <div
         data-department-card={`dept-${department.departmentNumber}`}
-        className={`relative flex flex-col justify-between rounded-2xl overflow-hidden border-2 shadow-2xl transition-all duration-300 select-none group ${
-          compact ? 'w-[145px] sm:w-[165px] min-h-[240px]' : 'w-[170px] sm:w-[195px] min-h-[290px]'
-        } ${
+        className={`relative flex flex-col justify-between rounded-2xl overflow-hidden border-2 shadow-2xl transition-all duration-300 select-none group w-full aspect-[2.25/3.5] ${
           canPlaceMeeple
             ? 'border-amber-400 ring-2 ring-amber-400/60 shadow-amber-500/20 hover:scale-[1.02] cursor-pointer'
             : isOccupied
@@ -176,11 +174,11 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
         {/* ===================================================================
             HEADER: Brass Porthole Number (#1-#10) + Category Badge + Title
         =================================================================== */}
-        <div className="p-2.5 pb-1 relative z-10 space-y-1.5 border-b border-amber-900/50 bg-black/40">
+        <div className="p-1.5 pb-1 relative z-10 space-y-0.5 border-b border-amber-900/50 bg-black/40">
           <div className="flex items-center justify-between gap-1.5">
             {/* The Brass Porthole Number (#1 - #10) */}
             <div
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-amber-400/90 flex items-center justify-center font-display font-black text-xs sm:text-sm text-stone-950 shadow-md shrink-0"
+              className="w-6 h-6 rounded-full border border-amber-400/90 flex items-center justify-center font-display font-black text-[10px] text-stone-950 shadow-md shrink-0 text-stone-950 shadow-md shrink-0"
               style={{
                 background: 'radial-gradient(circle, #FDE047 0%, #EAB308 55%, #A16207 100%)',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.7)',
@@ -192,17 +190,17 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
 
             {/* Category Tag */}
             <span
-              className={`px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-sans font-black uppercase tracking-wider border shadow-sm ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}
+              className={`px-2 py-0.5 rounded-full text-[7px] font-sans font-black uppercase tracking-wider px-1.5 py-0.2 border shadow-sm ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}
             >
               {catStyle.label}
             </span>
           </div>
 
           <div>
-            <h3 className="font-serif font-black text-xs sm:text-sm text-amber-100 leading-tight tracking-wide truncate">
+            <h3 className="font-serif font-black text-[10.5px] sm:text-[11px] text-amber-100 leading-tight tracking-wide truncate">
               {department.name}
             </h3>
-            <p className="text-[8.5px] sm:text-[9.5px] text-amber-300/70 font-sans tracking-tight truncate">
+            <p className="text-[7px] text-amber-300/70 font-sans tracking-tight truncate">
               {department.subtitle}
             </p>
           </div>
@@ -211,7 +209,7 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
         {/* ===================================================================
             CENTER CANVAS: Artwork + Interactive Worker Placement Porthole
         =================================================================== */}
-        <div className="relative px-2 py-1.5 flex-1 flex flex-col justify-center items-center z-10 min-h-[90px]">
+        <div className="relative px-2 py-1.5 flex-1 flex flex-col justify-center items-center z-10 min-h-[46px] py-1 px-1.5">
           {/* Background Illustration Thumbnail */}
           {department.imagePath && (
             <div className="absolute inset-2 rounded-xl overflow-hidden opacity-30 border border-amber-900/40 pointer-events-none">
@@ -230,7 +228,7 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
           {/* Dedicated Worker Placement Porthole */}
           <div className="relative z-20 flex flex-col items-center">
             <div
-              className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+              className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                 isOccupied
                   ? 'border-amber-400 bg-amber-950/90 shadow-xl'
                   : canPlaceMeeple
@@ -251,9 +249,9 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
             >
               {isOccupied && occupant ? (
                 <div className="flex flex-col items-center justify-center animate-fade-in">
-                  <BrewerMeepleSVG color={occupant.playerColor} size={compact ? 24 : 28} />
+                  <BrewerMeepleSVG color={occupant.playerColor} size={20} />
                   <span
-                    className="absolute -bottom-2 px-1.5 py-0.2 rounded bg-black/90 border border-amber-400/70 text-[7.5px] font-mono font-bold text-amber-200 tracking-wider truncate max-w-[50px] shadow"
+                    className="absolute -bottom-1.5 px-1 py-0.2 rounded bg-black/90 border border-amber-400/70 text-[6.5px] font-mono font-bold text-amber-200 tracking-wider truncate max-w-[44px] shadow"
                   >
                     {occupant.playerName.split(' ')[0]}
                   </span>
@@ -276,7 +274,7 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
             </div>
 
             {/* Porthole Detent Rim Label */}
-            <span className="mt-1 text-[7.5px] font-mono uppercase tracking-widest text-amber-400/80 font-bold">
+            <span className="mt-0.5 text-[6.5px] font-mono uppercase tracking-widest text-amber-400/80 font-bold">
               {isOccupied ? 'OCCUPIED' : canPlaceMeeple ? 'CLICK TO PLACE' : 'PRIVATE DEPT'}
             </span>
           </div>
@@ -285,12 +283,12 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
         {/* ===================================================================
             BODY: Passive Buffer (if any) + Shift Action Text + Trigger Button
         =================================================================== */}
-        <div className="p-2 pt-1 relative z-10 space-y-1 bg-black/60 border-t border-amber-900/40">
+        <div className="p-1.5 pt-1 relative z-10 space-y-0.5 bg-black/60 border-t border-amber-900/40">
           {/* Passive Buffer Badge */}
           {department.passiveEffect && (
-            <div className="px-2 py-0.8 rounded-lg bg-emerald-950/80 border border-emerald-500/50 flex items-center gap-1.5 shadow-sm">
+            <div className="px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/50 flex items-center gap-1.5 shadow-sm">
               <Shield className="w-3 h-3 text-emerald-400 shrink-0" />
-              <div className="text-[8px] sm:text-[8.5px] font-mono text-emerald-200 font-bold leading-tight">
+              <div className="text-[7px] font-mono text-emerald-200 font-bold leading-tight">
                 <span className="text-emerald-300 uppercase tracking-wider">✦ PASSIVE: </span>
                 {department.passiveEffect.description}
               </div>
@@ -298,13 +296,13 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
           )}
 
           {/* Action Box */}
-          <div className="px-2 py-1 rounded-lg bg-amber-950/60 border border-amber-500/40 flex flex-col gap-0.5 shadow-sm">
+          <div className="px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-500/40 flex flex-col gap-0.5 shadow-sm">
             <div className="flex items-center gap-1">
-              <span className="text-[8px] sm:text-[8.5px] font-sans font-black text-amber-300 uppercase tracking-wider">
+              <span className="text-[7px] font-sans font-black text-amber-300 uppercase tracking-wider">
                 ⚡ SHIFT ACTION:
               </span>
             </div>
-            <p className="text-[8px] sm:text-[8.5px] text-amber-100/90 leading-tight">
+            <p className="text-[7px] text-amber-100/90 leading-tight">
               {department.actionEffect.description}
             </p>
           </div>
@@ -314,7 +312,7 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
             <button
               type="button"
               onClick={handleActionClick}
-              className="w-full mt-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-sans font-black text-xs uppercase tracking-wider shadow-lg hover:scale-[1.02] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-amber-300"
+              className="w-full mt-0.5 py-1 px-1.5 rounded-lg bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-sans font-black text-[9px] uppercase tracking-wider shadow-lg hover:scale-[1.02] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-amber-300"
             >
               <span>Execute Action</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -322,7 +320,7 @@ export const DepartmentCardView: React.FC<DepartmentCardViewProps> = ({
           )}
 
           {/* Initiative order reminder footer */}
-          <div className="flex items-center justify-between text-[7.5px] font-mono text-stone-400 pt-0.5 border-t border-stone-800/50">
+          <div className="flex items-center justify-between text-[6.5px] font-mono text-stone-400 pt-0.5 border-t border-stone-800/50">
             <span>Tier 2 Turn #{department.departmentNumber}</span>
             <span className="text-amber-400/80">Resolves 2nd</span>
           </div>
