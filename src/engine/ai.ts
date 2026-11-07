@@ -11,7 +11,9 @@ import {
   executeMorningShift,
   executePhase1MarketRefresh,
   performCatwalkPlacement,
+  performDepartmentPlacement,
   performStationCommitment,
+  performDepartmentAction,
   performCenterPantryAction,
   getEffectiveRecipeRequirements,
   getRecipeTokenRequirements,
@@ -515,6 +517,41 @@ export function chooseAIAction(state: GameState): {
       }
     }
 
+    // Evaluate Personal Brewery Department option
+    let deptScore = -999999;
+    const canUseDepartment = !!player.departmentCard && !player.lastOccupiedDepartment && !player.departmentOccupant;
+    if (canUseDepartment && player.departmentCard) {
+      deptScore = 120; // baseline department utility
+      const deptType = player.departmentCard.actionEffect.type;
+      if (deptType === 'taproom_direct_sale') {
+        const coldBeers = player.zones[4]?.recipes || [];
+        if (coldBeers.length > 0) {
+          const topBeerVp = Math.max(...coldBeers.map((b) => b.vp));
+          deptScore = 700 + topBeerVp * 35; // direct skip packaging & instant score!
+        } else {
+          deptScore = 0; // useless if no cold beer
+        }
+      } else if (deptType === 'advance_pipeline') {
+        const totalBatches = ([1, 2, 3, 4, 5] as const).reduce((acc, z) => acc + (player.zones[z]?.recipes?.length || 0), 0);
+        deptScore = 200 + totalBatches * 80;
+      } else if (deptType === 'gain_grain') {
+        const grainNeed = (tokens.grain || 0) < 2 ? 180 : 80;
+        deptScore = grainNeed;
+      } else if (deptType === 'gain_hops_wild') {
+        deptScore = 190;
+      } else if (deptType === 'gain_two_distinct' || deptType === 'farm_swap') {
+        deptScore = 210;
+      }
+    }
+
+    if (canUseDepartment && deptScore > bestScore) {
+      const nextState = performDepartmentPlacement(state, player.id);
+      return {
+        actionDescription: `${player.name} moved meeple into personal Department #${player.departmentCard!.departmentNumber}: ${player.departmentCard!.name}!`,
+        nextState,
+      };
+    }
+
     const nextState = performCatwalkPlacement(state, bestSlot);
     return {
       actionDescription: `${player.name} moved meeple onto Catwalk #${bestSlot} (${slots[bestSlot].ingredientName})!`,
@@ -523,6 +560,32 @@ export function chooseAIAction(state: GameState): {
   }
 
   if (state.phase === 'PHASE_3_STATION_COMMITMENT' && state.rotaryBoard) {
+    if (player.departmentOccupant?.playerId === player.id && player.departmentCard) {
+      // Stationed at personal brewery department!
+      const dept = player.departmentCard;
+      const hoppers = state.centralHoppers || { grain: 24, hops: 20, yeast: 20, fruit: 14, spices: 12, chocolate: 12 };
+      const tokens = player.tokens || { grain: 0, hops: 0, yeast: 0, chocolate: 0, spices: 0, fruit: 0 };
+      let payload: any = {};
+
+      if (dept.actionEffect.type === 'gain_hops_wild') {
+        const wild = (['fruit', 'spices', 'yeast', 'grain'] as const).find((t) => (hoppers[t] || 0) > 0) || 'grain';
+        payload = { chosenToken: wild };
+      } else if (dept.actionEffect.type === 'gain_two_distinct') {
+        const keys = (['fruit', 'spices', 'yeast', 'hops', 'grain'] as const).filter((t) => (hoppers[t] || 0) > 0);
+        payload = { chosenToken: keys[0] || 'grain', secondToken: keys[1] || 'hops' };
+      } else if (dept.actionEffect.type === 'farm_swap') {
+        const discard = (['chocolate', 'spices', 'fruit', 'yeast', 'hops', 'grain'] as const).find((t) => (tokens[t] || 0) > 0) || 'grain';
+        const keys = (['grain', 'hops', 'yeast', 'fruit', 'spices'] as const).filter((t) => (hoppers[t] || 0) > 0);
+        payload = { discardToken: discard, chosenToken: keys[0] || 'grain', secondToken: keys[1] || 'hops' };
+      }
+
+      const nextState = performDepartmentAction(state, payload);
+      return {
+        actionDescription: `${player.name} executed shift action at Department #${dept.departmentNumber}: ${dept.name}!`,
+        nextState,
+      };
+    }
+
     const slots = state.rotaryBoard.slots;
     let committedSlot: RotarySlotNumber | null = null;
     for (let s = 1; s <= 7; s++) {

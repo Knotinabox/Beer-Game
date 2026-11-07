@@ -24,6 +24,9 @@ import {
   performManualTaproomFlush,
   performConveyorSlide,
   performRotaryAction,
+  performDepartmentPlacement,
+  performDepartmentAction,
+  DepartmentActionPayload,
   performCenterPantryAction,
   performEndOfShiftSlide,
   executePhase2ConveyorOperations,
@@ -264,6 +267,14 @@ function MainAppContent() {
     setGameState((prev) => performCenterPantryAction(prev, ingredient));
   };
 
+  const handlePlaceDepartment = (playerId: string) => {
+    setGameState((prev) => performDepartmentPlacement(prev, playerId));
+  };
+
+  const handleExecuteDepartmentAction = (payload?: DepartmentActionPayload) => {
+    setGameState((prev) => performDepartmentAction(prev, payload));
+  };
+
   // Ranked players for scoreboard
   const rankedPlayers = [...gameState.players].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
@@ -381,6 +392,8 @@ function MainAppContent() {
                 setSelectedLocationId(zoneId);
                 setShowLocationsModal(true);
               }}
+              onPlaceDepartment={handlePlaceDepartment}
+              onExecuteDepartmentAction={handleExecuteDepartmentAction}
             />
 
             

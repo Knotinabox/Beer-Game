@@ -285,17 +285,17 @@ export const VisualRulebookModal: React.FC<VisualRulebookModalProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="p-3 rounded-lg bg-stone-950/70 border border-stone-800 space-y-1">
                       <div className="text-[10px] font-mono text-amber-400 font-bold uppercase">Step 1 • Placement</div>
-                      <div className="font-bold text-white text-xs">Clockwise Placement</div>
+                      <div className="font-bold text-white text-xs">Catwalk OR Private Dept</div>
                       <p className="text-[11px] text-stone-400">
-                        In clockwise order around the table, each player places 1 Brewer Meeple on any unoccupied Catwalk (1–7). Catwalks are mutually exclusive.
+                        In clockwise order, place your 1 Brewer Meeple on any open public Catwalk (1–7) OR on your personal Brewery Department (#1–#10). Mandatory Movement: cannot stay in the same place two shifts in a row.
                       </p>
                     </div>
 
                     <div className="p-3 rounded-lg bg-stone-950/70 border border-amber-600/50 space-y-1">
                       <div className="text-[10px] font-mono text-amber-300 font-bold uppercase">Step 2 • Resolution</div>
-                      <div className="font-bold text-amber-200 text-xs">Sequential 1 ➔ 7 Order</div>
+                      <div className="font-bold text-amber-200 text-xs">Two-Tier Turn Order</div>
                       <p className="text-[11px] text-stone-400">
-                        Initiative does not go clockwise! Turns execute strictly in numerical catwalk order: <strong>Catwalk 1, then Catwalk 2, up through Catwalk 7</strong>.
+                        Public Catwalks resolve first in <strong>1 ➔ 7 order</strong>. Then, players stationed at personal Brewery Departments resolve second in <strong>#1 ➔ #10 numerical order</strong>!
                       </p>
                     </div>
 
@@ -343,6 +343,76 @@ export const VisualRulebookModal: React.FC<VisualRulebookModalProps> = ({
                       onSelectPlayerIndex={() => {}}
                       onPerformDiscardExcess={() => {}}
                     />
+                  </div>
+                </div>
+
+                {/* Dedicated Personal Brewery Departments Feature Block */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/70 via-stone-900 to-amber-950/70 border-2 border-amber-500/60 space-y-3 shadow-xl">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-800/40 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center font-serif shadow">
+                        #
+                      </span>
+                      <h4 className="font-serif font-black text-sm text-amber-200 tracking-wide uppercase">
+                        Personal Brewery Department Cards (#1 – #10) • Docked Flush Left of Zone 1
+                      </h4>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-500/60 text-[10px] font-mono text-emerald-300 font-bold">
+                      Private Worker Action Bay
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-stone-300 leading-relaxed">
+                    Each player is dealt 1 unique 2.25″ × 3.5″ Personal Department card docked flush to the left of their Zone 1 Warehouse.
+                    This card provides an exclusive worker porthole numbered #1 to #10 that only you can visit, featuring unique strategic powers:
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 text-[10px]">
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-amber-300">#1 The Night Shift</div>
+                      <p className="text-stone-400">Full pipeline advance: all batches slide rightward (1➔2, 2➔3, 3➔4, 4➔5); Zone 5 scores immediately!</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-amber-300">#2 The Taproom</div>
+                      <p className="text-stone-400">Direct-to-Consumer Draft: pour 1 beer from Zone 4 (Cold Room) straight to Trophy Rack (skip Zone 5)!</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-amber-300">#3 HR Office</div>
+                      <p className="text-stone-400">Look at top 3 Staff cards, hire 1 into open slot, 2 to bottom.</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-amber-300">#4 Maintenance Shop</div>
+                      <p className="text-stone-400">Look at top 3 Equipment cards, install 1 into open slot, 2 to bottom.</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-amber-300">#5 R&D Desk</div>
+                      <p className="text-stone-400">Look at top 3 Recipes, brew 1 into Zone 1 with -1 Token Discount, 2 to bottom.</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-emerald-300">#6 Grain Silo & Mill</div>
+                      <p className="text-stone-400">Passive: +1 Grain Buffer. Action: Take 2 Grain tokens from hoppers.</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-emerald-300">#7 Hop Cold Locker</div>
+                      <p className="text-stone-400">Passive: +1 Hops Buffer. Action: Take 1 Hops + 1 Wild token from hoppers.</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-amber-300">#8 Sourcing Desk</div>
+                      <p className="text-stone-400">Take any 2 tokens from hoppers, but must be two DIFFERENT ingredient types.</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-amber-300">#9 Farm Swap</div>
+                      <p className="text-stone-400">Barter: Return 1 token to hoppers ➔ Take any 2 tokens of your choice (Net +1).</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-black/60 border border-amber-900/60 space-y-0.5">
+                      <div className="font-bold text-emerald-300">#10 Yeast Bank</div>
+                      <p className="text-stone-400">Passive: +1 Yeast Buffer. Action: Take 1 Yeast token + optional 1-for-1 swap.</p>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] font-mono text-amber-400/90 pt-1 border-t border-amber-900/40 flex items-center justify-between">
+                    <span>Mandatory Movement: Cannot visit your personal department two shifts in a row.</span>
+                    <span>Two-Tier Initiative: Public Catwalks (1–7) resolve first; Departments (#1–#10) resolve second.</span>
                   </div>
                 </div>
 
@@ -676,20 +746,18 @@ export const VisualRulebookModal: React.FC<VisualRulebookModalProps> = ({
                         Place Brewer Meeple
                       </div>
                       <p className="text-stone-400">
-                        In clockwise order, place your 1 Brewer Meeple on any unoccupied Catwalk station (1–7). You must move every shift (cannot stay on the same station).
+                        In clockwise order, place your 1 Brewer Meeple on an open public Catwalk (1–7) OR on your personal Brewery Department (#1–#10). Mandatory Movement: cannot stay in the same place two shifts in a row.
                       </p>
                     </div>
 
                     <div className="p-2.5 rounded-xl bg-stone-900 border border-stone-800 space-y-1">
                       <div className="font-bold text-white flex items-center gap-1.5">
                         <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] flex items-center justify-center font-bold font-mono">2</span>
-                        Resolve Station Action
+                        Two-Tier Turn Resolution
                       </div>
                       <p className="text-stone-400">
-                        When your catwalk triggers in numerical 1 ➔ 7 order:
-                        <br /><strong>Option A</strong>: Take Inner Hopper tokens.
-                        <br /><strong>Option B</strong>: Draft Outer Shelf card.
-                        <br /><strong>Option C</strong>: (Station 7) Take 1 of ANY token.
+                        <strong>Tier 1</strong>: Catwalks resolve first in <strong>1 ➔ 7 order</strong> (Option A: Take Hopper tokens; Option B: Draft Outer Shelf card; Option C: Pantry Wild token).
+                        <br /><strong>Tier 2</strong>: Personal Departments resolve second in <strong>#1 ➔ #10 order</strong> (execute unique department shift action!).
                       </p>
                     </div>
                   </div>

@@ -868,6 +868,7 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
   it('Warehouse Over-Capacity (Option 1 Mandatory Return): Requires returning excess tokens to central hoppers before ending shift or turn', () => {
     let state = createInitialGameState({ playerCount: 2 });
     const p0 = state.players[0];
+    p0.departmentCard = null;
     const capacity = getWarehouseCapacity(p0);
     expect(capacity).toBe(6);
 
@@ -936,6 +937,7 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
   it('Option 1: AI players automatically return excess tokens down to warehouse capacity', () => {
     let state = createInitialGameState({ playerCount: 2 });
     const aiPlayer = state.players[1];
+    aiPlayer.departmentCard = null;
     aiPlayer.isAI = true;
     aiPlayer.tokens = { grain: 2, hops: 2, yeast: 2, fruit: 0, spices: 0, chocolate: 0 };
     expect(getWarehouseCapacity(aiPlayer)).toBe(6);
@@ -1449,6 +1451,7 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
     it('keeps warehouse spaces strictly capped at 6 and allocates extra tokens directly to cards', () => {
       const state = createInitialGameState({ playerCount: 2 });
       const p = state.players[0];
+      p.departmentCard = null;
 
       // Give player 8 tokens: 2 grain, 2 hops, 2 yeast, 2 fruit
       p.tokens = { grain: 2, hops: 2, yeast: 2, fruit: 2, spices: 0, chocolate: 0 };
@@ -1477,6 +1480,7 @@ describe('11.5" Rotary Board & Wooden Token Engine (Authoritative Spec)', () => 
     it('allocates dedicated tokens directly to matching card first', () => {
       const state = createInitialGameState({ playerCount: 2 });
       const p = state.players[0];
+      p.departmentCard = null;
 
       // Player has 2 grain, 1 hops, 2 spices (total 5 tokens)
       p.tokens = { grain: 2, hops: 1, yeast: 0, fruit: 0, spices: 2, chocolate: 0 };

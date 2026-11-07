@@ -146,6 +146,51 @@ export type RecipeTierName =
   | 'Heavyweight'
   | 'Seasonal & Special Release';
 
+export type BreweryDepartmentId =
+  | 'dept_night_shift'
+  | 'dept_taproom'
+  | 'dept_hr_office'
+  | 'dept_maintenance_shop'
+  | 'dept_rd_desk'
+  | 'dept_grain_silo'
+  | 'dept_hop_locker'
+  | 'dept_sourcing_desk'
+  | 'dept_farm_swap'
+  | 'dept_yeast_bank';
+
+export type BreweryDepartmentActionType =
+  | 'advance_pipeline'
+  | 'taproom_direct_sale'
+  | 'draft_staff_top3'
+  | 'draft_equipment_top3'
+  | 'draft_recipe_top3'
+  | 'gain_grain'
+  | 'gain_hops_wild'
+  | 'gain_two_distinct'
+  | 'farm_swap'
+  | 'yeast_swap';
+
+export interface BreweryDepartmentCard {
+  id: BreweryDepartmentId;
+  departmentNumber: number; // 1 to 10
+  name: string;
+  subtitle: string;
+  category: 'logistics' | 'commercial' | 'personnel' | 'engineering' | 'production' | 'sourcing';
+  flavorText: string;
+  imagePath?: string;
+  iconName: string;
+  passiveEffect?: {
+    type: 'grain_buffer' | 'hops_buffer' | 'yeast_buffer';
+    description: string;
+    extraCapacityToken?: IngredientTaxonomy;
+    extraCapacityAmount?: number;
+  };
+  actionEffect: {
+    type: BreweryDepartmentActionType;
+    description: string;
+  };
+}
+
 export type UpgradeType = 'equipment' | 'staff';
 
 export interface BaseCard {
@@ -406,6 +451,17 @@ export interface PlayerState {
   isClockedIn?: boolean;
   /** Station wedge occupied on previous shift (Forced Movement Rule: cannot select this Catwalk) */
   lastOccupiedStation?: RotarySlotNumber | null;
+  /** Mandatory Movement tracking: Did player occupy their personal department on previous shift? */
+  lastOccupiedDepartment?: boolean;
+
+  /** Personal Brewery Department card (2.25" x 3.5" standard card docked flush left of Zone 1) */
+  departmentCard?: BreweryDepartmentCard | null;
+  /** Meeple placed on personal brewery department during Phase 2 */
+  departmentOccupant?: {
+    playerId: string;
+    playerName: string;
+    playerColor: string;
+  } | null;
 
   // Universal Wings (extend 1.25" on left and right edges of the 11.5" x 5.75" board)
   leftWing: UpgradeCard[];  // Operations Command (Zone 1 left edge)
@@ -541,6 +597,10 @@ export interface GameState {
   mixerDeck: MixerPackCard[];
   mixerMarket: MixerPackCard[];
   mixerDiscard: MixerPackCard[];
+
+  // Deck 4: Personal Brewery Department Deck (10 Cards)
+  departmentDeck?: BreweryDepartmentCard[];
+  departmentDiscard?: BreweryDepartmentCard[];
   lastMixerClaimEvent?: {
     playerId: string;
     playerName: string;

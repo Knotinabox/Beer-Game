@@ -255,10 +255,38 @@ In this refined operational edition of *House of Hoyne*, catwalk positions are *
    - A player can **never** remain at the same station (including Station #7 Pantry) for two consecutive rounds!
 
 #### Rule 2.3: Establishing Shift Turn Initiative
-Once all players (from 1 up to 6) have their meeples seated on distinct Catwalk Portholes, turn order for the remainder of the shift is locked.
-- **Initiative Order**: Resolves strictly in numerical order from **Station #1 through Station #7**.
-- Station #1 (Chocolate) always executes first. Station #7 (Brewhouse Pantry) always executes last.
-- This creates intense tactical jockeying: do you take Station #1 or #2 for early turn initiative, or accept Station #6 or #7 for massive grain yields or wild pantry flexibility?
+Once all players (from 1 up to 6) have deployed their meeples to either Catwalks or their personal Brewery Departments, turn order for the remainder of the shift is locked.
+- **Two-Tier Initiative Order**:
+  - **Tier 1 (Public Catwalks First)**: All players who deployed to Rotary Catwalks resolve first, strictly in numerical catwalk order (**1 ➔ 7**).
+  - **Tier 2 (Private Departments Second)**: All players who deployed to Personal Departments resolve second, strictly in ascending department number order (**#1 ➔ #10**)!
+
+#### Rule 2.4: Personal Brewery Department Cards (#1 – #10)
+
+Each player begins the game with **1 unique 2.25″ × 3.5″ Personal Brewery Department card** docked flush to the left edge of their Zone 1 Warehouse:
+
+1. **Private Worker Action Space**:
+   - Each Department card features a dedicated brass worker porthole with a printed Department Number (**#1 through #10**).
+   - Only **you** may place your Brewer Meeple on your personal department; no opponents may ever block or enter your private facility.
+
+2. **Phase 2 Placement Option**:
+   - On your turn in Phase 2, you may place your Brewer Meeple on an open public Catwalk (1–7) **OR** onto your private Department Card.
+   - **Mandatory Movement Rule**: You can **never** visit your personal department two shifts in a row! If you occupied your department on the previous shift, you must place on a public Catwalk this shift.
+
+3. **Two-Tier Initiative Turn Resolution**:
+   - Public Catwalks resolve first (**1 ➔ 7**).
+   - Personal Departments resolve second (**#1 ➔ #10**). Ties are impossible because each player holds a unique department number.
+
+4. **The 10 Canonical Brewery Departments**:
+   - **#1 The Night Shift (Production)**: Full brewery pipeline advance! All batches shift rightward (1➔2, 2➔3, 3➔4, 4➔5); Zone 5 delivers to Trophy Rack and scores VP immediately!
+   - **#2 The Taproom (Commercial)**: Direct-to-Consumer Draft! Pour 1 beer from Zone 4 (Cold Room) directly to your Trophy Rack, scoring its full VP and skipping Zone 5 packaging entirely!
+   - **#3 Human Resources Office (Personnel)**: Look at top 3 cards of the Staff Deck. Hire 1 (paying normal token cost) into an open staff slot; place the other 2 on the bottom of the deck.
+   - **#4 Equipment Maintenance Shop (Engineering)**: Look at top 3 cards of the Equipment Deck. Install 1 (paying normal token cost) into an open equipment slot; place the other 2 on the bottom of the deck.
+   - **#5 Master Brewer's R&D Desk (Production)**: Look at top 3 Recipe cards. Brew 1 immediately into Zone 1 Warehouse with a **-1 Token Discount** (waive any 1 required token); place the other 2 on the bottom of the deck.
+   - **#6 The Grain Silo & Mill (Logistics)**: *Passive*: +1 Grain Buffer (Warehouse capacity +1 for Grain). *Action*: Take 2 Grain tokens from Central Hoppers.
+   - **#7 The Hop Cold Locker (Sourcing)**: *Passive*: +1 Hops Buffer (Warehouse capacity +1 for Hops). *Action*: Take 1 Hops + 1 Wild token from Central Hoppers.
+   - **#8 The Sourcing Desk (Sourcing)**: Take any 2 tokens from Central Hoppers, but they must be two **different** ingredient types.
+   - **#9 Spent Grain Farm Swap (Logistics)**: Barter: Return 1 token from your Warehouse to Central Hoppers ➔ Take any 2 tokens of your choice from Central Hoppers (Net +1 token gain).
+   - **#10 Yeast Propagation Bank (Sourcing)**: *Passive*: +1 Yeast Buffer (Warehouse capacity +1 for Yeast). *Action*: Take 1 Yeast token from Central Hoppers + optional 1-for-1 token swap.
 
 ---
 

@@ -9,6 +9,7 @@ import {
   createBreweryDeck,
   createTaproomDeck,
   createMixerPackDeck,
+  createDepartmentDeck,
   createInitialIngredientStations,
   INGREDIENT_STATION_METADATA,
   ROTARY_SLOT_DEFS,
@@ -43,6 +44,9 @@ import {
   RotaryOccupant,
   RotarySlotState,
   RotaryBoardState,
+  BreweryDepartmentCard,
+  BreweryDepartmentId,
+  BreweryDepartmentActionType,
 } from './types';
 
 const PLAYER_COLORS = [
@@ -512,6 +516,11 @@ export function getWarehouseCapacity(player: PlayerState): number {
   // Inspect optional legacy list if present
   if ((player as any).installedUpgrades) {
     (player as any).installedUpgrades.forEach(processUpgrade);
+  }
+
+  // Inspect active Brewery Department passive storage buffer
+  if (player.departmentCard?.passiveEffect?.extraCapacityAmount) {
+    cap += player.departmentCard.passiveEffect.extraCapacityAmount;
   }
 
   return cap;
@@ -1009,6 +1018,17 @@ export function createInitialGameState(config: {
   const mixerDeck: MixerPackCard[] = allMixerCards;
   const mixerDiscard: MixerPackCard[] = [];
 
+  // Deck 4: 10-Card Brewery Department Deck (Deal 1 unique department to each player)
+  let departmentDeck = shuffleArray(createDepartmentDeck(), rng);
+  const departmentDiscard: BreweryDepartmentCard[] = [];
+  for (let pIdx = 0; pIdx < players.length; pIdx++) {
+    if (departmentDeck.length > 0) {
+      players[pIdx].departmentCard = departmentDeck.shift()!;
+      players[pIdx].departmentOccupant = null;
+      players[pIdx].lastOccupiedDepartment = false;
+    }
+  }
+
   const targetBatches = getTargetBatchesForPlayerCount(playerCount);
 
   const initialState: GameState = {
@@ -1032,6 +1052,8 @@ export function createInitialGameState(config: {
     mixerDeck,
     mixerMarket,
     mixerDiscard,
+    departmentDeck,
+    departmentDiscard,
     lastMixerClaimEvent: null,
     recipeDeck,
     recipeDiscard,
@@ -1118,6 +1140,9 @@ function clonePlayer(player: PlayerState): PlayerState {
     mixerPacks: [...(player.mixerPacks || [])],
     completedBatches: [...(player.completedBatches || [])],
     placedWorkerStationId: player.placedWorkerStationId ?? null,
+    lastOccupiedDepartment: player.lastOccupiedDepartment ?? false,
+    departmentCard: player.departmentCard ? { ...player.departmentCard } : null,
+    departmentOccupant: player.departmentOccupant ? { ...player.departmentOccupant } : null,
     scoreBreakdown: { ...player.scoreBreakdown },
     zones: {
       1: {
@@ -4327,18 +4352,35 @@ export function performCatwalkPlacement(
     `${player.name} moved meeple onto Catwalk #${slotNumber} (${slot.ingredientName})!`
   );
 
-  // Check if all active players have placed on Catwalks 1-7
-  const placedMeeples = ([1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[])
+  // 3b. Also clear meeple from personal department if previously stationed there
+  player.departmentOccupant = null;
+
+  // Check if all active players have placed (Catwalks 1-7 + Personal Brewery Departments #1-10)
+  const catwalkMeeples = ([1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[])
     .filter((s) => rotaryBoard.slots[s]?.catwalkOccupant !== null && rotaryBoard.slots[s]?.catwalkOccupant !== undefined)
     .map((s) => ({ slotNumber: s, occupant: rotaryBoard.slots[s].catwalkOccupant! }));
 
-  if (placedMeeples.length >= players.length) {
-    // Turn Order: The physical positions of the meeples on the Catwalks strictly establish
-    // the new turn order for the remainder of the shift (resolving sequentially from Catwalk 1 through 7).
-    const sortedOrder = placedMeeples
+  const deptMeeples = players
+    .filter((p) => p.departmentOccupant !== null && p.departmentOccupant !== undefined && p.departmentCard)
+    .map((p) => ({
+      departmentNumber: p.departmentCard!.departmentNumber,
+      playerId: p.departmentOccupant!.playerId,
+      name: p.name,
+    }));
+
+  const totalPlacedCount = catwalkMeeples.length + deptMeeples.length;
+
+  if (totalPlacedCount >= players.length) {
+    // Two-tier initiative: Public Catwalks 1-7 resolve first; personal departments resolve second in #1-#10 order
+    const catwalkOrder = catwalkMeeples
       .sort((a, b) => a.slotNumber - b.slotNumber)
       .map((item) => item.occupant.playerId);
 
+    const deptOrder = deptMeeples
+      .sort((a, b) => a.departmentNumber - b.departmentNumber)
+      .map((item) => item.playerId);
+
+    const sortedOrder = [...catwalkOrder, ...deptOrder];
     rotaryBoard.turnOrder = sortedOrder;
     const firstPlayerId = sortedOrder[0];
     const firstPlayerIndex = Math.max(0, players.findIndex((p) => p.id === firstPlayerId));
@@ -4348,7 +4390,7 @@ export function performCatwalkPlacement(
       state.turnNumber,
       players[firstPlayerIndex],
       'PHASE_3_STATION_COMMITMENT',
-      `🎯 INITIATIVE ESTABLISHED! Shift turn order (Catwalks 1 ➔ 7): ${sortedOrder
+      `🎯 INITIATIVE ESTABLISHED! Shift turn order: Catwalks (${catwalkOrder.length}) ➔ Departments (${deptOrder.length}): ${sortedOrder
         .map((id) => players.find((p) => p.id === id)?.name)
         .join(' ➔ ')}. ${players[firstPlayerIndex].name} acts first!`
     );
@@ -4369,10 +4411,11 @@ export function performCatwalkPlacement(
   let safety = 0;
   while (safety < players.length) {
     const nextPlayer = players[nextIdx];
-    const alreadyPlaced = ([1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]).some(
+    const alreadyOnCatwalk = ([1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]).some(
       (s) => rotaryBoard.slots[s]?.catwalkOccupant?.playerId === nextPlayer.id
     );
-    if (!alreadyPlaced) break;
+    const alreadyInDept = !!nextPlayer.departmentOccupant;
+    if (!alreadyOnCatwalk && !alreadyInDept) break;
     nextIdx = (nextIdx + 1) % players.length;
     safety++;
   }
@@ -4698,6 +4741,8 @@ export function performStationCommitment(
     slot.outerCard = null;
     player.lastOccupiedStation = slotNumber;
     player.actionsTakenThisShift = 1;
+    player.lastOccupiedStation = slotNumber;
+    player.lastOccupiedDepartment = false;
   }
 
   updatePlayerMat(player);
@@ -4813,6 +4858,9 @@ export function performStationCommitment(
   // When a player moves to a new Catwalk in Phase 2, they pick up their meeple, or evict anyone still in that station!
   for (const s of [1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]) {
     afterSlideState.rotaryBoard!.slots[s].catwalkOccupant = null;
+  }
+  for (const p of afterSlideState.players) {
+    p.departmentOccupant = null;
   }
 
   // Calculate new initiative turn order for next shift based on occupied stations 1-7
@@ -5517,4 +5565,949 @@ export function enforceAiWarehouseCapacity(
     );
   }
   return nextLogs;
+}
+
+
+/**
+ * Advances a single player's brewery conveyor pipeline rightward (1->2->3->4->5->Trophy Rack).
+ * Reusable by both Phase 2 global conveyor operations and Department #1 (The Night Shift).
+ */
+export function advanceSinglePlayerPipeline(
+  player: PlayerState,
+  state: GameState,
+  centralHoppers: Record<IngredientTaxonomy, number>,
+  logs: LogEntry[],
+  phaseTag: TurnPhase = 'PHASE_2_CONVEYOR_OPERATIONS'
+): { logs: LogEntry[]; isFinalRound: boolean; endgameTriggeredByPlayerId: string | null } {
+  let isFinalRound = state.isFinalRound;
+  let endgameTriggeredByPlayerId = state.endgameTriggeredByPlayerId;
+
+  // 1. Deliver & Score: Column 5 (Packaging / Canning Lines) -> Completed Trophy Rack (After packaging!)
+  while (player.zones[5].recipes.length > 0) {
+    const delivered = player.zones[5].recipes.shift()!;
+    (delivered as any).scored = true;
+    if (!player.completedBatches) player.completedBatches = [];
+    player.completedBatches.push(delivered);
+    player.score += delivered.vp;
+    player.scoreBreakdown.recipeBaseVp += delivered.vp;
+
+    logs = addLog(
+      logs,
+      state.turnNumber,
+      player,
+      phaseTag,
+      `🍺 DELIVERED & SCORED: ${delivered.name} (+${delivered.vp} Prestige VP) completed packaging in Zone 5 and delivered to Trophy Rack! Total delivered: ${player.completedBatches.length}/${state.targetBatchesToTriggerEnd}`
+    );
+
+    // Automated Keg Racker: take 1 Grain and 1 Yeast from central hoppers
+    const kegRackerCount = countUpgradeEffect(player, 'delivery_take_grain_and_yeast');
+    for (let k = 0; k < kegRackerCount; k++) {
+      if (centralHoppers.grain > 0) {
+        centralHoppers.grain -= 1;
+        player.tokens.grain = (player.tokens.grain || 0) + 1;
+      }
+      if (centralHoppers.yeast > 0) {
+        centralHoppers.yeast -= 1;
+        player.tokens.yeast = (player.tokens.yeast || 0) + 1;
+      }
+      logs = addLog(logs, state.turnNumber, player, phaseTag, `⚙️ Automated Keg Racker delivery: +1 GRAIN & +1 YEAST tokens.`);
+    }
+
+    // Taproom Lead: Take 1 Spices from the Market
+    const taproomLeadCount = countUpgradeEffect(player, 'delivery_take_spices') + countUpgradeEffect(player, 'delivery_take_pantry_token');
+    for (let t = 0; t < taproomLeadCount; t++) {
+      const spiceChoice: IngredientTaxonomy = (centralHoppers.spices > 0) ? 'spices' : (centralHoppers.grain > 0 ? 'grain' : 'hops');
+      if (centralHoppers[spiceChoice] > 0) {
+        centralHoppers[spiceChoice] -= 1;
+        player.tokens[spiceChoice] = (player.tokens[spiceChoice] || 0) + 1;
+        logs = addLog(logs, state.turnNumber, player, phaseTag, `🍺 Taproom Lead delivery bonus: +1 ${spiceChoice.toUpperCase()} token from the Market.`);
+      }
+    }
+
+    // Case Packer & Date Coder: Take 1 Hops from the Market
+    const casePackerCount = countUpgradeEffect(player, 'delivery_take_hops');
+    for (let c = 0; c < casePackerCount; c++) {
+      if (centralHoppers.hops > 0) {
+        centralHoppers.hops -= 1;
+        player.tokens.hops = (player.tokens.hops || 0) + 1;
+        logs = addLog(logs, state.turnNumber, player, phaseTag, `📦 Case Packer delivery bonus: +1 HOPS token from the Market.`);
+      }
+    }
+
+    // Pallet Stretch Wrapper: Retain 1 spent Grain
+    const stretchGrainCount = countUpgradeEffect(player, 'delivery_retain_spent_grain') + countUpgradeEffect(player, 'delivery_retain_spent_token');
+    for (let s = 0; s < stretchGrainCount; s++) {
+      player.tokens.grain = (player.tokens.grain || 0) + 1;
+      logs = addLog(logs, state.turnNumber, player, phaseTag, `📦 Pallet Stretch Wrapper: Retained 1 spent GRAIN token.`);
+    }
+
+    // QA & Packaging Lead: Retain 1 spent Hops
+    const qaHopsCount = countUpgradeEffect(player, 'delivery_retain_spent_hops');
+    for (let q = 0; q < qaHopsCount; q++) {
+      player.tokens.hops = (player.tokens.hops || 0) + 1;
+      logs = addLog(logs, state.turnNumber, player, phaseTag, `🔬 QA & Packaging Lead: Retained 1 spent HOPS token.`);
+    }
+
+    // Dock Expediter & Delivery Driver: Take 1 token of any available type
+    const dockExpediterCount = countUpgradeEffect(player, 'delivery_take_kettle_token');
+    for (let d = 0; d < dockExpediterCount; d++) {
+      const availableTax = ((Object.keys(centralHoppers) as IngredientTaxonomy[]).find(
+        (tax) => (centralHoppers[tax] ?? 0) > 0
+      ) || 'grain');
+      if (centralHoppers[availableTax] > 0) {
+        centralHoppers[availableTax] -= 1;
+        player.tokens[availableTax] = (player.tokens[availableTax] || 0) + 1;
+        logs = addLog(logs, state.turnNumber, player, phaseTag, `🚚 Dock Expediter / Driver delivery bonus: +1 ${availableTax.toUpperCase()} token.`);
+      }
+    }
+
+    // Brand Ambassador: Take 1 token of any available type from Market upon delivering to Trophy Rack
+    const ambassadorCount = countUpgradeEffect(player, 'delivery_take_market_token');
+    for (let a = 0; a < ambassadorCount; a++) {
+      const priorityOrder: IngredientTaxonomy[] = ['fruit', 'spices', 'chocolate', 'hops', 'yeast', 'grain'];
+      const availableTax = priorityOrder.find((t) => (centralHoppers[t] ?? 0) > 0) || 'grain';
+      if (centralHoppers[availableTax] > 0) {
+        centralHoppers[availableTax] -= 1;
+        player.tokens[availableTax] = (player.tokens[availableTax] || 0) + 1;
+        logs = addLog(logs, state.turnNumber, player, phaseTag, `⭐ Brand Ambassador: Took 1 ${availableTax.toUpperCase()} token from the Market upon delivery.`);
+      }
+    }
+
+    // Legacy Brand Ambassador fallback
+    const legacyAmbassadorCount = countUpgradeEffect(player, 'delivery_score_bonus_vp');
+    for (let a = 0; a < legacyAmbassadorCount; a++) {
+      player.scoreBreakdown.upgradeTriggeredVp += 1;
+      player.score += 1;
+      logs = addLog(logs, state.turnNumber, player, phaseTag, `⭐ Brand Ambassador: Scored +1 bonus Victory Point on delivery.`);
+    }
+  }
+
+  // 2. Advance to Packaging: Column 4 (Conditioning) -> Column 5 (Packaging & Canning Lines)
+  const packagingCap = 1;
+  while (player.zones[5].recipes.length < packagingCap && player.zones[4].recipes.length > 0) {
+    const packaging = player.zones[4].recipes.shift()!;
+    player.zones[5].recipes.push(packaging);
+
+    logs = addLog(
+      logs,
+      state.turnNumber,
+      player,
+      phaseTag,
+      `📦 ADVANCED: ${packaging.name} moved from Conditioning & Lagering into Column 5 (Packaging & Canning Lines).`
+    );
+
+    // Route Driver kickback
+    const routeDriverCount = countUpgradeEffect(player, 'package_beer_take_grain') + countUpgradeEffect(player, 'package_beer_take_kettle_token');
+    for (let r = 0; r < routeDriverCount; r++) {
+      const availableTax: IngredientTaxonomy = (centralHoppers.grain > 0) ? 'grain' : 'hops';
+      if (centralHoppers[availableTax] > 0) {
+        centralHoppers[availableTax] -= 1;
+        player.tokens[availableTax] = (player.tokens[availableTax] || 0) + 1;
+        logs = addLog(logs, state.turnNumber, player, phaseTag, `🚛 Route Driver packaging perk: +1 ${availableTax.toUpperCase()} token from the Market as ${packaging.name} enters Packaging.`);
+      }
+    }
+  }
+
+  // 3. Advance to Conditioning: Column 3 (Cellar) -> Column 4 (Conditioning & Lagering)
+  const conditioningCap = 1;
+  while (player.zones[4].recipes.length < conditioningCap && player.zones[3].recipes.length > 0) {
+    const conditioning = player.zones[3].recipes.shift()!;
+    player.zones[4].recipes.push(conditioning);
+    logs = addLog(
+      logs,
+      state.turnNumber,
+      player,
+      phaseTag,
+      `🧪 ADVANCED: ${conditioning.name} moved from Fermentation Cellar into Column 4 (Conditioning & Lagering).`
+    );
+
+    // Kickback 1: Conical Unitank: Take 1 Hops from the hopper
+    const unitankCount = countUpgradeEffect(player, 'advance_cellar_to_pack_take_hops');
+    for (let u = 0; u < unitankCount; u++) {
+      if (centralHoppers.hops > 0) {
+        centralHoppers.hops -= 1;
+        player.tokens.hops = (player.tokens.hops || 0) + 1;
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          phaseTag,
+          `⚗️ Conical Unitank kickback: +1 HOPS token as ${conditioning.name} advances into Conditioning.`
+        );
+      }
+    }
+
+    // Kickback 2: Plate Heat Exchanger: Take 1 Yeast from the hopper
+    const heatExchangerCount = countUpgradeEffect(player, 'advance_cellar_to_pack_take_yeast');
+    for (let h = 0; h < heatExchangerCount; h++) {
+      if (centralHoppers.yeast > 0) {
+        centralHoppers.yeast -= 1;
+        player.tokens.yeast = (player.tokens.yeast || 0) + 1;
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          phaseTag,
+          `❄️ Plate Heat Exchanger kickback: +1 YEAST token as ${conditioning.name} advances into Conditioning.`
+        );
+      }
+    }
+
+    // Kickback 3: Glycol Cooling Jacket: Take 1 Grain from the hopper
+    const glycolCount = countUpgradeEffect(player, 'advance_cellar_to_pack_take_grain');
+    for (let g = 0; g < glycolCount; g++) {
+      if (centralHoppers.grain > 0) {
+        centralHoppers.grain -= 1;
+        player.tokens.grain = (player.tokens.grain || 0) + 1;
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          phaseTag,
+          `❄️ Glycol Cooling Jacket kickback: +1 GRAIN token as ${conditioning.name} advances into Conditioning.`
+        );
+      }
+    }
+
+    // Kickback 4: Oak Aging Foeder & Barrel Master: Take 1 Spice from the hopper
+    const foederCount = countUpgradeEffect(player, 'advance_cellar_to_pack_take_spices') + countUpgradeEffect(player, 'advance_cellar_to_pack_take_spice_or_fruit');
+    for (let f = 0; f < foederCount; f++) {
+      const pref: IngredientTaxonomy = (centralHoppers.spices > 0) ? 'spices' : 'fruit';
+      if (centralHoppers[pref] > 0) {
+        centralHoppers[pref] -= 1;
+        player.tokens[pref] = (player.tokens[pref] || 0) + 1;
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          phaseTag,
+          `🪵 Oak Aging Foeder / Barrel Master kickback: +1 ${pref.toUpperCase()} token as ${conditioning.name} advances into Conditioning.`
+        );
+      }
+    }
+
+    // Kickback 5: Centrifuge Clarifier & Dry-Hop Lead: Take 1 Hops from the hopper
+    const hopKickbacks = countUpgradeEffect(player, 'advance_brewhouse_to_cellar_take_hops');
+    for (let c = 0; c < hopKickbacks; c++) {
+      if (centralHoppers.hops > 0) {
+        centralHoppers.hops -= 1;
+        player.tokens.hops = (player.tokens.hops || 0) + 1;
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          phaseTag,
+          `🌿 Conditioning kickback: +1 HOPS token as ${conditioning.name} advances into Conditioning.`
+        );
+      }
+    }
+
+    // Kickback 6: Bright Conditioning Rig & Cellar Apprentice: Take 1 Yeast from the hopper
+    const yeastKickbacks = countUpgradeEffect(player, 'advance_brewhouse_to_cellar_take_yeast');
+    for (let b = 0; b < yeastKickbacks; b++) {
+      if (centralHoppers.yeast > 0) {
+        centralHoppers.yeast -= 1;
+        player.tokens.yeast = (player.tokens.yeast || 0) + 1;
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          phaseTag,
+          `🧪 Conditioning kickback: +1 YEAST token as ${conditioning.name} advances into Conditioning.`
+        );
+      }
+    }
+
+    // Kickback 7: Lagering Tank: Take 1 Grain from the hopper
+    const grainKickbacks = countUpgradeEffect(player, 'advance_brewhouse_to_cellar_take_grain');
+    for (let l = 0; l < grainKickbacks; l++) {
+      if (centralHoppers.grain > 0) {
+        centralHoppers.grain -= 1;
+        player.tokens.grain = (player.tokens.grain || 0) + 1;
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          phaseTag,
+          `🌾 Lagering Tank kickback: +1 GRAIN token as ${conditioning.name} advances into Conditioning.`
+        );
+      }
+    }
+  }
+
+  // Migrate any recipes in rightWing from earlier turns back to zones[5].recipes
+  if (player.rightWing && player.rightWing.length > 0) {
+    const recipeWings = player.rightWing.filter((r: any) => r.deckType === 'recipe');
+    for (const rw of recipeWings) {
+      if (!player.zones[5].recipes.some((r) => r.id === rw.id)) {
+        (rw as any).scored = true;
+        player.zones[5].recipes.push(rw as any);
+      }
+    }
+    player.rightWing = player.rightWing.filter((r: any) => r.deckType !== 'recipe');
+  }
+
+  // Check win condition using targetBatchesToTriggerEnd
+  const completedCount = player.completedBatches?.length || 0;
+  if (completedCount >= state.targetBatchesToTriggerEnd && !isFinalRound) {
+    endgameTriggeredByPlayerId = player.id;
+    isFinalRound = true;
+    logs = addLog(
+      logs,
+      state.turnNumber,
+      player,
+      phaseTag,
+      `🏆 WIN CONDITION MET! ${player.name} has delivered ${completedCount} batches to the Trophy Rack (Target: ${state.targetBatchesToTriggerEnd})!`
+    );
+  }
+
+  // 4. Advance to Fermentation: Column 2 (Brewhouse) -> Column 3 (Cellar)
+  const cellarCap =
+    hasUpgradeInstalled(player, 'Glycol') ||
+    countUpgradeEffect(player, 'advance_cellar_to_pack_take_grain') > 0 ||
+    countUpgradeEffect(player, 'carboy_capacity_plus_1') > 0
+      ? 2
+      : 1;
+  if (player.zones[3].recipes.length < cellarCap && player.zones[2].recipes.length > 0) {
+    const fermenting = player.zones[2].recipes.shift()!;
+    player.zones[3].recipes.push(fermenting);
+    logs = addLog(
+      logs,
+      state.turnNumber,
+      player,
+      phaseTag,
+      `🔥 ADVANCED: ${fermenting.name} moved from Brewhouse into Column 3 (Fermentation Cellar).`
+    );
+
+    // Kickbacks into Fermentation
+    const hopCellarKickbacks = countUpgradeEffect(player, 'advance_brewhouse_to_cellar_take_hops');
+    for (let c = 0; c < hopCellarKickbacks; c++) {
+      if (centralHoppers.hops > 0) {
+        centralHoppers.hops -= 1;
+        player.tokens.hops = (player.tokens.hops || 0) + 1;
+        logs = addLog(logs, state.turnNumber, player, phaseTag, `🌿 Cellar advance kickback: +1 HOPS token as ${fermenting.name} enters Fermentation Cellar.`);
+      }
+    }
+    const grainCellarKickbacks = countUpgradeEffect(player, 'advance_brewhouse_to_cellar_take_grain');
+    for (let l = 0; l < grainCellarKickbacks; l++) {
+      if (centralHoppers.grain > 0) {
+        centralHoppers.grain -= 1;
+        player.tokens.grain = (player.tokens.grain || 0) + 1;
+        logs = addLog(logs, state.turnNumber, player, phaseTag, `🌾 Cellar advance kickback: +1 GRAIN token as ${fermenting.name} enters Fermentation Cellar.`);
+      }
+    }
+    const yeastCellarKickbacks = countUpgradeEffect(player, 'advance_brewhouse_to_cellar_take_yeast');
+    for (let y = 0; y < yeastCellarKickbacks; y++) {
+      if (centralHoppers.yeast > 0) {
+        centralHoppers.yeast -= 1;
+        player.tokens.yeast = (player.tokens.yeast || 0) + 1;
+        logs = addLog(logs, state.turnNumber, player, phaseTag, `🧪 Cellar advance kickback: +1 YEAST token as ${fermenting.name} enters Fermentation Cellar.`);
+      }
+    }
+  }
+
+  // 5. Advance Staged Recipes: Column 1 (Warehouse) -> Column 2 (Brewhouse)
+  const brewhouseCap = 1;
+  if (player.zones[2].recipes.length < brewhouseCap && player.zones[1].recipes.length > 0) {
+    const staged = player.zones[1].recipes.shift()!;
+    player.zones[2].recipes.push(staged);
+    logs = addLog(
+      logs,
+      state.turnNumber,
+      player,
+      phaseTag,
+      `📦 ADVANCED: ${staged.name} moved from Warehouse Staging into Column 2 (Brewhouse Kettle).`
+    );
+  }
+
+  updatePlayerMat(player);
+  return { logs, isFinalRound, endgameTriggeredByPlayerId };
+}
+
+
+
+/**
+ * Phase 2: Personal Brewery Department Placement
+ * Players may choose to place their meeple onto their personal brewery department
+ * instead of a public Catwalk (1-7).
+ * Mandatory Movement Rule: Cannot visit personal department two shifts in a row.
+ * Turn Order: Public Catwalks (1-7) always resolve first; personal departments
+ * resolve second, strictly in numerical order (#1 through #10).
+ */
+export function performDepartmentPlacement(
+  state: GameState,
+  playerId?: string
+): GameState {
+  if (
+    state.phase !== 'PHASE_2_CATWALK_PLACEMENT' &&
+    state.phase !== 'PHASE_1_WORKER_DRAFT' &&
+    state.phase !== 'WORK_DAY'
+  ) {
+    return state;
+  }
+  if (!state.rotaryBoard) return state;
+
+  const players = state.players.map(clonePlayer);
+  const targetId = playerId || players[state.currentPlayerIndex]?.id;
+  const playerIndex = players.findIndex((p) => p.id === targetId);
+  const player = players[playerIndex];
+  if (!player || !player.departmentCard) return state;
+
+  // 1. Mandatory Movement Rule: Cannot visit personal department two shifts in a row
+  if (player.lastOccupiedDepartment) {
+    return state; // Blocked: Must place on a public Catwalk this shift!
+  }
+
+  // 2. Already occupied check
+  if (player.departmentOccupant && player.departmentOccupant.playerId === player.id) {
+    return state; // Already placed on department
+  }
+
+  const rotaryBoard: RotaryBoardState = {
+    ...state.rotaryBoard,
+    slots: {
+      1: { ...state.rotaryBoard.slots[1] },
+      2: { ...state.rotaryBoard.slots[2] },
+      3: { ...state.rotaryBoard.slots[3] },
+      4: { ...state.rotaryBoard.slots[4] },
+      5: { ...state.rotaryBoard.slots[5] },
+      6: { ...state.rotaryBoard.slots[6] },
+      7: { ...state.rotaryBoard.slots[7] },
+    },
+  };
+
+  // 3. Remove meeple from any catwalk 1..7 (if previously stationed there)
+  for (const s of [1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]) {
+    if (rotaryBoard.slots[s].catwalkOccupant?.playerId === player.id) {
+      rotaryBoard.slots[s].catwalkOccupant = null;
+    }
+    if (rotaryBoard.slots[s].inwardOccupant?.playerId === player.id) {
+      rotaryBoard.slots[s].inwardOccupant = null;
+    }
+    if (rotaryBoard.slots[s].outwardOccupant?.playerId === player.id) {
+      rotaryBoard.slots[s].outwardOccupant = null;
+    }
+    if (rotaryBoard.slots[s].standbyOccupant?.playerId === player.id) {
+      rotaryBoard.slots[s].standbyOccupant = null;
+    }
+  }
+  if (rotaryBoard.centerSpaceOccupant?.playerId === player.id) {
+    rotaryBoard.centerSpaceOccupant = null;
+  }
+
+  // 4. Place active player on personal department
+  player.departmentOccupant = {
+    playerId: player.id,
+    playerName: player.name,
+    playerColor: player.color,
+  };
+
+  let logs = addLog(
+    state.logs,
+    state.turnNumber,
+    player,
+    'PHASE_2_CATWALK_PLACEMENT',
+    `${player.name} moved meeple into personal Department #${player.departmentCard.departmentNumber}: ${player.departmentCard.name}!`
+  );
+
+  // 5. Check if all active players have placed
+  const catwalkMeeples = ([1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[])
+    .filter((s) => rotaryBoard.slots[s]?.catwalkOccupant !== null && rotaryBoard.slots[s]?.catwalkOccupant !== undefined)
+    .map((s) => ({ slotNumber: s, occupant: rotaryBoard.slots[s].catwalkOccupant! }));
+
+  const deptMeeples = players
+    .filter((p) => p.departmentOccupant !== null && p.departmentOccupant !== undefined && p.departmentCard)
+    .map((p) => ({
+      departmentNumber: p.departmentCard!.departmentNumber,
+      playerId: p.departmentOccupant!.playerId,
+      name: p.name,
+    }));
+
+  const totalPlacedCount = catwalkMeeples.length + deptMeeples.length;
+
+  if (totalPlacedCount >= players.length) {
+    const catwalkOrder = catwalkMeeples
+      .sort((a, b) => a.slotNumber - b.slotNumber)
+      .map((item) => item.occupant.playerId);
+
+    const deptOrder = deptMeeples
+      .sort((a, b) => a.departmentNumber - b.departmentNumber)
+      .map((item) => item.playerId);
+
+    const sortedOrder = [...catwalkOrder, ...deptOrder];
+    rotaryBoard.turnOrder = sortedOrder;
+    const firstPlayerId = sortedOrder[0];
+    const firstPlayerIndex = Math.max(0, players.findIndex((p) => p.id === firstPlayerId));
+
+    logs = addLog(
+      logs,
+      state.turnNumber,
+      players[firstPlayerIndex],
+      'PHASE_3_STATION_COMMITMENT',
+      `🎯 INITIATIVE ESTABLISHED! Shift turn order: Catwalks (${catwalkOrder.length}) ➔ Departments (${deptOrder.length}): ${sortedOrder
+        .map((id) => players.find((p) => p.id === id)?.name)
+        .join(' ➔ ')}. ${players[firstPlayerIndex].name} acts first!`
+    );
+
+    return {
+      ...state,
+      players,
+      rotaryBoard,
+      currentPlayerIndex: firstPlayerIndex,
+      phase: 'PHASE_3_STATION_COMMITMENT',
+      shiftPhase: 'PHASE_3_STATION_COMMITMENT',
+      logs,
+    };
+  }
+
+  // Advance to next unplaced player
+  let nextIdx = (state.currentPlayerIndex + 1) % players.length;
+  let safety = 0;
+  while (safety < players.length) {
+    const nextPlayer = players[nextIdx];
+    const alreadyOnCatwalk = ([1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]).some(
+      (s) => rotaryBoard.slots[s]?.catwalkOccupant?.playerId === nextPlayer.id
+    );
+    const alreadyInDept = !!nextPlayer.departmentOccupant;
+    if (!alreadyOnCatwalk && !alreadyInDept) break;
+    nextIdx = (nextIdx + 1) % players.length;
+    safety++;
+  }
+
+  return {
+    ...state,
+    players,
+    rotaryBoard,
+    currentPlayerIndex: nextIdx,
+    logs,
+  };
+}
+
+export interface DepartmentActionPayload {
+  chosenToken?: IngredientTaxonomy;
+  secondToken?: IngredientTaxonomy;
+  discardToken?: IngredientTaxonomy;
+  swapTokenOut?: IngredientTaxonomy;
+  swapTokenIn?: IngredientTaxonomy;
+  chosenCardId?: string;
+  chosenUpgradeOption?: 'equipment' | 'staff' | 'leftWing' | 'rightWing';
+  targetZoneId?: ZoneId;
+}
+
+/**
+ * Phase 3: Personal Brewery Department Action Execution
+ * Executed when a player who placed their meeple on their personal department resolves their turn.
+ */
+export function performDepartmentAction(
+  state: GameState,
+  payload?: DepartmentActionPayload
+): GameState {
+  if (
+    state.phase !== 'PHASE_3_STATION_COMMITMENT' &&
+    state.phase !== 'WORK_DAY' &&
+    state.phase !== 'PHASE_1_WORKER_DRAFT'
+  ) {
+    return state;
+  }
+  if (!state.rotaryBoard) return state;
+
+  const players = state.players.map(clonePlayer);
+  const player = players[state.currentPlayerIndex];
+  if (!player || !player.departmentCard) return state;
+
+  // Must be stationed at their department
+  if (!player.departmentOccupant || player.departmentOccupant.playerId !== player.id) {
+    return state;
+  }
+
+  const dept = player.departmentCard;
+  let centralHoppers = { ...(state.centralHoppers || TOTAL_TOKEN_POOL) };
+  let kettlePool = { ...(state.kettlePool || { grain: 0, hops: 0, yeast: 0, fruit: 0, spices: 0, chocolate: 0 }) };
+  let logs = [...state.logs];
+  let isFinalRound = state.isFinalRound;
+  let endgameTriggeredByPlayerId = state.endgameTriggeredByPlayerId;
+  let nextBreweryDeck = [...(state.breweryDeck || [])];
+  let nextBreweryDiscard = [...(state.breweryDiscard || [])];
+  let nextStaffDeck = [...(state.staffDeck || [])];
+  let nextStaffDiscard = [...(state.staffDiscard || [])];
+  let nextEquipmentDeck = [...(state.equipmentDeck || [])];
+  let nextEquipmentDiscard = [...(state.equipmentDiscard || [])];
+
+  switch (dept.actionEffect.type) {
+    case 'advance_pipeline': {
+      // #1: The Night Shift - Full pipeline rightward advance
+      const advanceRes = advanceSinglePlayerPipeline(player, state, centralHoppers, logs, 'PHASE_3_STATION_COMMITMENT');
+      logs = advanceRes.logs;
+      if (advanceRes.isFinalRound) {
+        isFinalRound = true;
+        endgameTriggeredByPlayerId = advanceRes.endgameTriggeredByPlayerId;
+      }
+      logs = addLog(
+        logs,
+        state.turnNumber,
+        player,
+        'PHASE_3_STATION_COMMITMENT',
+        `🌙 THE NIGHT SHIFT: ${player.name} ran overnight transfers! All brewery pipeline batches moved rightward; Zone 5 packaged & scored!`
+      );
+      break;
+    }
+
+    case 'taproom_direct_sale': {
+      // #2: The Taproom - Move 1 beer from Zone 4 directly to Trophy Rack (skip Zone 5)
+      if (player.zones[4].recipes.length > 0) {
+        const poured = player.zones[4].recipes.shift()!;
+        (poured as any).scored = true;
+        if (!player.completedBatches) player.completedBatches = [];
+        player.completedBatches.push(poured);
+        player.score += poured.vp;
+        player.scoreBreakdown.recipeBaseVp += poured.vp;
+
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          'PHASE_3_STATION_COMMITMENT',
+          `🍻 THE TAPROOM: Direct-to-Consumer Draft! ${player.name} poured ${poured.name} (+${poured.vp} VP) straight from Cold Room (Zone 4) to Trophy Rack, skipping Packaging entirely!`
+        );
+
+        if (player.completedBatches.length >= state.targetBatchesToTriggerEnd && !isFinalRound) {
+          isFinalRound = true;
+          endgameTriggeredByPlayerId = player.id;
+          logs = addLog(
+            logs,
+            state.turnNumber,
+            player,
+            'PHASE_3_STATION_COMMITMENT',
+            `🏆 ENDGAME TRIGGERED! ${player.name} has poured ${player.completedBatches.length} batches to reach target (${state.targetBatchesToTriggerEnd})!`
+          );
+        }
+      } else {
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          'PHASE_3_STATION_COMMITMENT',
+          `🍻 THE TAPROOM: ${player.name} opened the taps, but had no conditioned beer resting in Zone 4 (Cold Room).`
+        );
+      }
+      break;
+    }
+
+    case 'draft_staff_top3': {
+      // #3: HR Office - Look at top 3 staff, hire 1, 2 on bottom
+      const top3 = nextStaffDeck.slice(0, 3);
+      const chosenCard = payload?.chosenCardId
+        ? top3.find((c) => c.id === payload.chosenCardId || c.name === payload.chosenCardId) || top3[0]
+        : top3[0];
+
+      if (chosenCard) {
+        const targetZoneId: ZoneId = (payload?.targetZoneId || chosenCard.targetZone || 1) as ZoneId;
+        const targetZone = player.zones[targetZoneId];
+        // Deduct cost if possible
+        const reqs = chosenCard.installTokens || { grain: 1 };
+        for (const [tax, count] of Object.entries(reqs) as [IngredientTaxonomy, number][]) {
+          player.tokens[tax] = Math.max(0, (player.tokens[tax] || 0) - count);
+        }
+        targetZone.staff.push(chosenCard);
+        // Remove chosen card and move other 2 to bottom
+        nextStaffDeck = nextStaffDeck.filter((c) => c.id !== chosenCard.id);
+        const remainingTop = top3.filter((c) => c.id !== chosenCard.id);
+        nextStaffDeck = nextStaffDeck.filter((c) => !remainingTop.some((r) => r.id === c.id));
+        nextStaffDeck.push(...remainingTop);
+
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          'PHASE_3_STATION_COMMITMENT',
+          `👥 HR OFFICE: ${player.name} interviewed candidates and hired ${chosenCard.name} into Zone ${targetZoneId}!`
+        );
+      }
+      break;
+    }
+
+    case 'draft_equipment_top3': {
+      // #4: Maintenance Shop - Look at top 3 equipment, install 1, 2 on bottom
+      const top3 = nextEquipmentDeck.slice(0, 3);
+      const chosenCard = payload?.chosenCardId
+        ? top3.find((c) => c.id === payload.chosenCardId || c.name === payload.chosenCardId) || top3[0]
+        : top3[0];
+
+      if (chosenCard) {
+        const targetZoneId: ZoneId = (payload?.targetZoneId || chosenCard.targetZone || 1) as ZoneId;
+        const targetZone = player.zones[targetZoneId];
+        const reqs = chosenCard.installTokens || { grain: 1 };
+        for (const [tax, count] of Object.entries(reqs) as [IngredientTaxonomy, number][]) {
+          player.tokens[tax] = Math.max(0, (player.tokens[tax] || 0) - count);
+        }
+        targetZone.equipment.push(chosenCard);
+        nextEquipmentDeck = nextEquipmentDeck.filter((c) => c.id !== chosenCard.id);
+        const remainingTop = top3.filter((c) => c.id !== chosenCard.id);
+        nextEquipmentDeck = nextEquipmentDeck.filter((c) => !remainingTop.some((r) => r.id === c.id));
+        nextEquipmentDeck.push(...remainingTop);
+
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          'PHASE_3_STATION_COMMITMENT',
+          `🔧 MAINTENANCE SHOP: ${player.name} overhauled hardware and installed ${chosenCard.name} into Zone ${targetZoneId}!`
+        );
+      }
+      break;
+    }
+
+    case 'draft_recipe_top3': {
+      // #5: R&D Desk - Look at top 3 recipes, brew 1 into Zone 1 with -1 token discount, 2 on bottom
+      const topRecipes = nextBreweryDeck.filter((c): c is RecipeCard => c.deckType === 'recipe').slice(0, 3);
+      const chosenRecipe = payload?.chosenCardId
+        ? topRecipes.find((c) => c.id === payload.chosenCardId || c.name === payload.chosenCardId) || topRecipes[0]
+        : topRecipes[0];
+
+      if (chosenRecipe) {
+        const reqs = getRecipeTokenRequirements(player, chosenRecipe);
+        // Waive 1 token as discount
+        let waived = false;
+        for (const tax of ['grain', 'hops', 'yeast', 'chocolate', 'spices', 'fruit'] as IngredientTaxonomy[]) {
+          if ((reqs[tax] || 0) > 0 && !waived) {
+            reqs[tax] = Math.max(0, reqs[tax] - 1);
+            waived = true;
+          }
+          const toPay = reqs[tax] || 0;
+          player.tokens[tax] = Math.max(0, (player.tokens[tax] || 0) - toPay);
+        }
+        player.zones[1].recipes.push(chosenRecipe);
+        nextBreweryDeck = nextBreweryDeck.filter((c) => c.id !== chosenRecipe.id);
+        const remainingTop = topRecipes.filter((c) => c.id !== chosenRecipe.id);
+        nextBreweryDeck = nextBreweryDeck.filter((c) => !remainingTop.some((r) => r.id === c.id));
+        nextBreweryDeck.push(...remainingTop);
+
+        logs = addLog(
+          logs,
+          state.turnNumber,
+          player,
+          'PHASE_3_STATION_COMMITMENT',
+          `📓 R&D DESK: ${player.name} formulated pilot batch of ${chosenRecipe.name} into Zone 1 Warehouse with -1 Token Discount!`
+        );
+      }
+      break;
+    }
+
+    case 'gain_grain': {
+      // #6: Silo & Mill - Take 2 Grain
+      const takeAmount = Math.min(2, centralHoppers.grain || 0);
+      centralHoppers.grain = Math.max(0, (centralHoppers.grain || 0) - takeAmount);
+      player.tokens.grain = (player.tokens.grain || 0) + takeAmount;
+
+      logs = addLog(
+        logs,
+        state.turnNumber,
+        player,
+        'PHASE_3_STATION_COMMITMENT',
+        `🌾 GRAIN SILO & MILL: ${player.name} milled grist and drafted ${takeAmount} Grain tokens into Warehouse!`
+      );
+      break;
+    }
+
+    case 'gain_hops_wild': {
+      // #7: Hop Cold Locker - Take 1 Hops + 1 Wild
+      if (centralHoppers.hops > 0) {
+        centralHoppers.hops -= 1;
+        player.tokens.hops = (player.tokens.hops || 0) + 1;
+      }
+      const wildTax = payload?.chosenToken || (['fruit', 'spices', 'yeast', 'grain'] as IngredientTaxonomy[]).find((t) => (centralHoppers[t] || 0) > 0) || 'grain';
+      if ((centralHoppers[wildTax] || 0) > 0) {
+        centralHoppers[wildTax] -= 1;
+        player.tokens[wildTax] = (player.tokens[wildTax] || 0) + 1;
+      }
+
+      logs = addLog(
+        logs,
+        state.turnNumber,
+        player,
+        'PHASE_3_STATION_COMMITMENT',
+        `❄️ HOP COLD LOCKER: ${player.name} drafted 1 Hops and 1 ${wildTax.toUpperCase()} token into Warehouse!`
+      );
+      break;
+    }
+
+    case 'gain_two_distinct': {
+      // #8: Sourcing Desk - Take any 2 tokens of different types
+      const t1 = payload?.chosenToken || (Object.keys(centralHoppers) as IngredientTaxonomy[]).find((t) => (centralHoppers[t] || 0) > 0) || 'grain';
+      const t2 = payload?.secondToken || (Object.keys(centralHoppers) as IngredientTaxonomy[]).find((t) => t !== t1 && (centralHoppers[t] || 0) > 0) || 'hops';
+
+      if ((centralHoppers[t1] || 0) > 0) {
+        centralHoppers[t1] -= 1;
+        player.tokens[t1] = (player.tokens[t1] || 0) + 1;
+      }
+      if ((centralHoppers[t2] || 0) > 0 && t1 !== t2) {
+        centralHoppers[t2] -= 1;
+        player.tokens[t2] = (player.tokens[t2] || 0) + 1;
+      }
+
+      logs = addLog(
+        logs,
+        state.turnNumber,
+        player,
+        'PHASE_3_STATION_COMMITMENT',
+        `📋 SOURCING DESK: ${player.name} direct-ordered 1 ${t1.toUpperCase()} and 1 ${t2.toUpperCase()} tokens into Warehouse!`
+      );
+      break;
+    }
+
+    case 'farm_swap': {
+      // #9: Farm Swap - Discard 1 token -> Take any 2 tokens
+      const disc = payload?.discardToken || (Object.keys(player.tokens) as IngredientTaxonomy[]).find((t) => (player.tokens[t] || 0) > 0) || 'grain';
+      if ((player.tokens[disc] || 0) > 0) {
+        player.tokens[disc] -= 1;
+        centralHoppers[disc] = (centralHoppers[disc] || 0) + 1;
+      }
+      const g1 = payload?.chosenToken || (Object.keys(centralHoppers) as IngredientTaxonomy[]).find((t) => (centralHoppers[t] || 0) > 0) || 'grain';
+      if ((centralHoppers[g1] || 0) > 0) {
+        centralHoppers[g1] -= 1;
+        player.tokens[g1] = (player.tokens[g1] || 0) + 1;
+      }
+      const g2 = payload?.secondToken || (Object.keys(centralHoppers) as IngredientTaxonomy[]).find((t) => (centralHoppers[t] || 0) > 0) || 'hops';
+      if ((centralHoppers[g2] || 0) > 0) {
+        centralHoppers[g2] -= 1;
+        player.tokens[g2] = (player.tokens[g2] || 0) + 1;
+      }
+
+      logs = addLog(
+        logs,
+        state.turnNumber,
+        player,
+        'PHASE_3_STATION_COMMITMENT',
+        `🔄 SPENT GRAIN FARM SWAP: ${player.name} traded 1 ${disc.toUpperCase()} for 1 ${g1.toUpperCase()} & 1 ${g2.toUpperCase()} (Net +1)!`
+      );
+      break;
+    }
+
+    case 'yeast_swap': {
+      // #10: Yeast Bank - Take 1 Yeast + optional swap 1
+      if ((centralHoppers.yeast || 0) > 0) {
+        centralHoppers.yeast -= 1;
+        player.tokens.yeast = (player.tokens.yeast || 0) + 1;
+      }
+      if (payload?.swapTokenOut && payload?.swapTokenIn && (player.tokens[payload.swapTokenOut] || 0) > 0 && (centralHoppers[payload.swapTokenIn] || 0) > 0) {
+        player.tokens[payload.swapTokenOut] -= 1;
+        centralHoppers[payload.swapTokenOut] = (centralHoppers[payload.swapTokenOut] || 0) + 1;
+        centralHoppers[payload.swapTokenIn] -= 1;
+        player.tokens[payload.swapTokenIn] = (player.tokens[payload.swapTokenIn] || 0) + 1;
+      }
+
+      logs = addLog(
+        logs,
+        state.turnNumber,
+        player,
+        'PHASE_3_STATION_COMMITMENT',
+        `🧬 YEAST PROPAGATION BANK: ${player.name} cultured 1 Yeast token and maintained pure strains!`
+      );
+      break;
+    }
+  }
+
+  // Mark completion of shift action
+  player.actionsTakenThisShift = 1;
+  player.lastOccupiedDepartment = true;
+  player.lastOccupiedStation = null;
+  updatePlayerMat(player);
+
+  const turnOrder = state.rotaryBoard.turnOrder || players.map((p) => p.id);
+  const currentIdxInTurnOrder = turnOrder.indexOf(player.id);
+  const isShiftComplete = currentIdxInTurnOrder === -1 || currentIdxInTurnOrder >= turnOrder.length - 1;
+
+  if (!isShiftComplete) {
+    const nextPlayerId = turnOrder[currentIdxInTurnOrder + 1];
+    const nextPlayerIndex = Math.max(0, players.findIndex((p) => p.id === nextPlayerId));
+
+    return {
+      ...state,
+      players,
+      centralHoppers,
+      kettlePool,
+      breweryDeck: nextBreweryDeck,
+      breweryDiscard: nextBreweryDiscard,
+      staffDeck: nextStaffDeck,
+      staffDiscard: nextStaffDiscard,
+      equipmentDeck: nextEquipmentDeck,
+      equipmentDiscard: nextEquipmentDiscard,
+      currentPlayerIndex: nextPlayerIndex,
+      isFinalRound,
+      endgameTriggeredByPlayerId,
+      logs,
+    };
+  }
+
+  // Shift is complete! Run Morning Shift conveyor slide and reset
+  if (isFinalRound) {
+    for (const p of players) {
+      updatePlayerMat(p);
+    }
+    const winnerIds = computeWinners(players);
+    const maxScore = Math.max(...players.map((p) => p.score));
+
+    logs = addLog(
+      logs,
+      state.turnNumber,
+      player,
+      'GAME_OVER',
+      `🏁 GAME OVER! Shift complete. Winner: ${winnerIds.map((id) => players.find((p) => p.id === id)?.name).join(', ')} with ${maxScore} VP!`
+    );
+
+    return {
+      ...state,
+      players,
+      centralHoppers,
+      kettlePool,
+      breweryDeck: nextBreweryDeck,
+      breweryDiscard: nextBreweryDiscard,
+      staffDeck: nextStaffDeck,
+      staffDiscard: nextStaffDiscard,
+      equipmentDeck: nextEquipmentDeck,
+      equipmentDiscard: nextEquipmentDiscard,
+      isFinalRound,
+      endgameTriggeredByPlayerId,
+      winnerIds,
+      phase: 'GAME_OVER',
+      shiftPhase: 'GAME_OVER',
+      logs,
+    };
+  }
+
+  let afterSlideState: GameState = {
+    ...state,
+    players,
+    centralHoppers,
+    kettlePool,
+    breweryDeck: nextBreweryDeck,
+    breweryDiscard: nextBreweryDiscard,
+    staffDeck: nextStaffDeck,
+    staffDiscard: nextStaffDiscard,
+    equipmentDeck: nextEquipmentDeck,
+    equipmentDiscard: nextEquipmentDiscard,
+    isFinalRound,
+    endgameTriggeredByPlayerId,
+    logs,
+  };
+
+  afterSlideState = executePhase2ConveyorOperations(afterSlideState);
+  if (afterSlideState.phase === 'GAME_OVER') {
+    return afterSlideState;
+  }
+
+  for (const s of [1, 2, 3, 4, 5, 6, 7] as RotarySlotNumber[]) {
+    afterSlideState.rotaryBoard!.slots[s].catwalkOccupant = null;
+  }
+  for (const p of afterSlideState.players) {
+    p.departmentOccupant = null;
+    p.actionsTakenThisShift = 0;
+  }
+
+  afterSlideState.turnNumber += 1;
+  afterSlideState.roundNumber += 1;
+  afterSlideState.phase = 'PHASE_2_CATWALK_PLACEMENT';
+  afterSlideState.shiftPhase = 'PHASE_2_CATWALK_PLACEMENT';
+
+  return executePhase1MarketRefresh(afterSlideState);
 }

@@ -23,6 +23,8 @@ import {
   ZoneCardView,
 } from './CardComponents';
 import { WOODEN_TOKEN_COLORS } from './WoodenTokens';
+import { DepartmentCardView } from './DepartmentCardView';
+import { DepartmentActionPayload } from '../engine/gameEngine';
 import {
   Warehouse,
   Flame,
@@ -50,6 +52,8 @@ export interface AssemblyLineProps {
   onPerformDiscardExcess: (discardIds: string[]) => void;
   onDiscardToken?: (taxonomy: IngredientTaxonomy) => void;
   onInspectZone?: (zoneId: ZoneId) => void;
+  onPlaceDepartment?: (playerId: string) => void;
+  onExecuteDepartmentAction?: (payload?: DepartmentActionPayload) => void;
 }
 
 /**
@@ -317,6 +321,8 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
   onPerformDiscardExcess,
   onDiscardToken,
   onInspectZone,
+  onPlaceDepartment,
+  onExecuteDepartmentAction,
 }) => {
   const activePlayer = gameState.players[gameState.currentPlayerIndex];
   const inspectedPlayer =
@@ -537,10 +543,56 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
           </div>
         </div>
 
-        {/* 11.5" x 5.75" BOARD (5-ZONE EXPANDED PANORAMIC PIPELINE) */}
-        <div className="w-full">
+        {/* 11.5" x 5.75" BOARD & DOCKED PERSONAL BREWERY DEPARTMENT (#1 - #10) */}
+        <div className="w-full flex flex-col xl:flex-row items-stretch gap-4">
+          {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse) */}
+          {inspectedPlayer.departmentCard && (
+            <div className="shrink-0 flex flex-col justify-center items-center relative">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-[10px] font-sans font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  Private Department
+                </span>
+                <span className="text-[9px] font-mono text-stone-400">
+                  (Left of Zone 1)
+                </span>
+              </div>
+              <div className="relative">
+                <DepartmentCardView
+                  department={inspectedPlayer.departmentCard}
+                  player={inspectedPlayer}
+                  activePlayer={activePlayer}
+                  isCurrentTurn={isActivePlayerInspected}
+                  phase={gameState.phase}
+                  canPlaceMeeple={
+                    isActivePlayerInspected &&
+                    gameState.phase === 'PHASE_2_CATWALK_PLACEMENT' &&
+                    !inspectedPlayer.lastOccupiedDepartment &&
+                    !inspectedPlayer.departmentOccupant
+                  }
+                  onPlaceMeeple={() => onPlaceDepartment?.(inspectedPlayer.id)}
+                  canExecuteAction={
+                    isActivePlayerInspected &&
+                    gameState.phase === 'PHASE_3_STATION_COMMITMENT' &&
+                    inspectedPlayer.departmentOccupant?.playerId === inspectedPlayer.id
+                  }
+                  onExecuteAction={onExecuteDepartmentAction}
+                />
+                {/* Visual Brass Docking Bracket joining Department Card to Zone 1 */}
+                <div
+                  className="hidden xl:flex absolute -right-3 top-1/2 -translate-y-1/2 z-30 flex-col items-center gap-0.5"
+                  title="Industrial Brass Clamp docking Department Card flush to Zone 1 Warehouse"
+                >
+                  <div className="w-3.5 h-6 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 rounded-sm border border-amber-300/80 shadow-lg flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-stone-900 border border-amber-300" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* MAIN BREWERY SECTION: TOP TUCK RAIL + PANORAMIC MAT + BOTTOM TUCK RAIL + INTEGRATED PIPELINE */}
-          <div className="w-full flex flex-col relative">
+          <div className="flex-1 min-w-0 flex flex-col relative">
 
               {/* =============================================================
                   1. TOP EDGE: EQUIPMENT UPGRADE TUCK RAIL

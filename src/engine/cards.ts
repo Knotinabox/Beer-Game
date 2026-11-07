@@ -13,6 +13,7 @@ import {
   ZoneId,
   MixerPackCard,
   RotarySlotNumber,
+  BreweryDepartmentCard,
 } from './types';
 
 export interface RotarySlotDefinition {
@@ -2428,4 +2429,179 @@ export function createFullCatalog() {
   };
 }
 
+// ============================================================================
+// PERSONAL BREWERY DEPARTMENT DECK (10 Unique 2.25" x 3.5" Cards)
+// Docks flush to the left of Zone 1 Warehouse.
+// Numbered 1 to 10 for deterministic Tier 2 shift resolution order!
+// ============================================================================
+export const BREWERY_DEPARTMENT_DEFINITIONS: BreweryDepartmentCard[] = [
+  {
+    id: 'dept_night_shift',
+    departmentNumber: 1,
+    name: 'The Night Shift',
+    subtitle: 'Overnight Operations Crew',
+    category: 'production',
+    flavorText: 'When the city sleeps, the cellar sings. Midnight transfers keep the brewery running 24/7.',
+    imagePath: '/zones/zone-2-brewhouse.jpg',
+    iconName: 'Moon',
+    actionEffect: {
+      type: 'advance_pipeline',
+      description: 'Full Brewery Advance: Shift all batches rightward (4➔5, 3➔4, 2➔3, 1➔2). Zone 5 delivers & scores VP immediately!',
+    },
+  },
+  {
+    id: 'dept_taproom',
+    departmentNumber: 2,
+    name: 'The Taproom',
+    subtitle: 'Direct-to-Consumer Draft',
+    category: 'commercial',
+    flavorText: 'Fresh beer straight from conditioning tanks to the guest glass. No canning line needed.',
+    imagePath: '/board/brewhouse-kettle-hub.jpg',
+    iconName: 'Beer',
+    actionEffect: {
+      type: 'taproom_direct_sale',
+      description: 'Direct-to-Consumer Draft: Move 1 finished beer from Zone 4 (Cold Room) directly to Trophy Rack, skipping Zone 5 packaging!',
+    },
+  },
+  {
+    id: 'dept_hr_office',
+    departmentNumber: 3,
+    name: 'Human Resources Office',
+    subtitle: 'Talent Acquisition & Staffing',
+    category: 'personnel',
+    flavorText: 'Great beer is brewed by great people. Find the right hands for the cellar floor.',
+    imagePath: '/upgrades/staff-warehouse-foreman.jpg',
+    iconName: 'Users',
+    actionEffect: {
+      type: 'draft_staff_top3',
+      description: 'Look at the top 3 cards of the Staff Deck. Hire 1 (paying normal token cost) into an open staff slot. Return 2 to bottom.',
+    },
+  },
+  {
+    id: 'dept_maintenance_shop',
+    departmentNumber: 4,
+    name: 'Equipment Maintenance Shop',
+    subtitle: 'Machinery Upgrades & Tooling',
+    category: 'engineering',
+    flavorText: 'Steam valves, heat exchangers, and drive belts require obsessive preventive maintenance.',
+    imagePath: '/upgrades/equip-automated-canning.jpg',
+    iconName: 'Wrench',
+    actionEffect: {
+      type: 'draft_equipment_top3',
+      description: 'Look at the top 3 cards of the Equipment Deck. Install 1 (paying normal token cost) into an open equipment slot. Return 2 to bottom.',
+    },
+  },
+  {
+    id: 'dept_rd_desk',
+    departmentNumber: 5,
+    name: "Master Brewer's R&D Desk",
+    subtitle: 'Pilot Batch Lab & Recipe Design',
+    category: 'production',
+    flavorText: "Sean Hoyne's formulation notebook: where wild fermentation concepts become flagship ales.",
+    imagePath: '/recipes/hoyne-pilsner.jpg',
+    iconName: 'FlaskConical',
+    actionEffect: {
+      type: 'draft_recipe_top3',
+      description: 'Look at the top 3 Recipe cards. Brew 1 immediately into Zone 1 Warehouse with a -1 Token Discount (any 1 ingredient waived). Return 2 to bottom.',
+    },
+  },
+  {
+    id: 'dept_grain_silo',
+    departmentNumber: 6,
+    name: 'The Grain Silo & Mill',
+    subtitle: 'Bulk Malt Storage & Grist Intake',
+    category: 'logistics',
+    flavorText: 'Tonnes of British Columbian two-row malt standing ready for the morning mash-in.',
+    imagePath: '/zones/zone-1-grain-warehouse.jpg',
+    iconName: 'Wheat',
+    passiveEffect: {
+      type: 'grain_buffer',
+      description: '+1 Grain Buffer: Expands your Warehouse capacity by +1 for Grain tokens.',
+      extraCapacityToken: 'grain',
+      extraCapacityAmount: 1,
+    },
+    actionEffect: {
+      type: 'gain_grain',
+      description: 'Mill Grist: Take 2 Grain tokens from Central Hoppers into your Warehouse.',
+    },
+  },
+  {
+    id: 'dept_hop_locker',
+    departmentNumber: 7,
+    name: 'The Hop Cold Locker',
+    subtitle: 'Cryo-Pellet Vault & Aroma Stash',
+    category: 'sourcing',
+    flavorText: 'Sub-zero vacuum-sealed nitrogen pouches preserving delicate lupulin oils and volatile aromas.',
+    imagePath: '/zones/zone-4-conditioning.jpg',
+    iconName: 'Snowflake',
+    passiveEffect: {
+      type: 'hops_buffer',
+      description: '+1 Hops Buffer: Expands your Warehouse capacity by +1 for Hops tokens.',
+      extraCapacityToken: 'hops',
+      extraCapacityAmount: 1,
+    },
+    actionEffect: {
+      type: 'gain_hops_wild',
+      description: 'Draft Cryo Hops: Take 1 Hops token + 1 token of ANY ingredient from Central Hoppers.',
+    },
+  },
+  {
+    id: 'dept_sourcing_desk',
+    departmentNumber: 8,
+    name: 'The Sourcing Desk',
+    subtitle: 'Bespoke Ingredient Purchasing',
+    category: 'sourcing',
+    flavorText: 'Direct grower relations secure premier lot allocations from the Fraser Valley to Saaz.',
+    imagePath: '/board/rotary-dial-artwork.jpg',
+    iconName: 'ClipboardCheck',
+    actionEffect: {
+      type: 'gain_two_distinct',
+      description: 'Direct Supplier Order: Take any 2 tokens from Central Hoppers, must be two DIFFERENT ingredient types.',
+    },
+  },
+  {
+    id: 'dept_farm_swap',
+    departmentNumber: 9,
+    name: 'Spent Grain Farm Swap',
+    subtitle: 'Local Agricultural Exchange',
+    category: 'logistics',
+    flavorText: 'Local dairy and hog farmers haul away warm spent mash, trading regional specialties in return.',
+    imagePath: '/zones/zone-5-dock.jpg',
+    iconName: 'Repeat',
+    actionEffect: {
+      type: 'farm_swap',
+      description: 'Farmer Barter: Return 1 token from Warehouse to Central Hoppers ➔ Take any 2 tokens of your choice (Net +1 token).',
+    },
+  },
+  {
+    id: 'dept_yeast_bank',
+    departmentNumber: 10,
+    name: 'Yeast Propagation Bank',
+    subtitle: 'House Strain Culture Library',
+    category: 'sourcing',
+    flavorText: 'Cryogenic glycerol stocks preserve pure Saccharomyces and Brettanomyces generations.',
+    imagePath: '/zones/zone-3-cellar.jpg',
+    iconName: 'Dna',
+    passiveEffect: {
+      type: 'yeast_buffer',
+      description: '+1 Yeast Buffer: Expands your Warehouse capacity by +1 for Yeast tokens.',
+      extraCapacityToken: 'yeast',
+      extraCapacityAmount: 1,
+    },
+    actionEffect: {
+      type: 'yeast_swap',
+      description: 'Harvest & Propagate: Take 1 Yeast token from Central Hoppers, and you may swap 1 token in Warehouse for 1 token in Central Hoppers.',
+    },
+  },
+];
 
+/**
+ * Creates a fresh, deep-cloned copy of the 10-card Brewery Department Deck.
+ */
+export function createDepartmentDeck(): BreweryDepartmentCard[] {
+  return BREWERY_DEPARTMENT_DEFINITIONS.map((dept) => ({
+    ...dept,
+    passiveEffect: dept.passiveEffect ? { ...dept.passiveEffect } : undefined,
+    actionEffect: { ...dept.actionEffect },
+  }));
+}
