@@ -6,6 +6,7 @@ import {
   performDepartmentAction,
   performStationCommitment,
   getWarehouseCapacity,
+  toggleDepartmentsModule,
 } from './gameEngine';
 import { BREWERY_DEPARTMENT_DEFINITIONS, createDepartmentDeck } from './cards';
 import { PlayerState, RotarySlotNumber } from './types';
@@ -248,5 +249,20 @@ describe('Personal Brewery Departments System (#1 - #10)', () => {
     expect(state.phase).toBe('PHASE_2_CATWALK_PLACEMENT');
     const s1 = performCatwalkPlacement(state, 1, state.players[0].id);
     expect(s1.rotaryBoard?.slots[1]?.catwalkOccupant?.playerId).toBe(state.players[0].id);
+  });
+
+  it('supports dynamically toggling departments on and off via toggleDepartmentsModule', () => {
+    let state = createInitialGameState({ playerCount: 4, humanCount: 1, enableDepartments: true });
+    expect(state.players.every((p) => p.departmentCard !== undefined)).toBe(true);
+
+    // Toggle off
+    state = toggleDepartmentsModule(state, false);
+    expect(state.enableDepartments).toBe(false);
+    expect(state.players.every((p) => p.departmentCard === undefined)).toBe(true);
+
+    // Toggle back on
+    state = toggleDepartmentsModule(state, true);
+    expect(state.enableDepartments).toBe(true);
+    expect(state.players.every((p) => p.departmentCard !== undefined)).toBe(true);
   });
 });

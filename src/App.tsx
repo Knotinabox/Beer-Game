@@ -30,6 +30,7 @@ import {
   performCenterPantryAction,
   performEndOfShiftSlide,
   executePhase2ConveyorOperations,
+  toggleDepartmentsModule,
 } from './engine/gameEngine';
 import { executeAITurn } from './engine/ai';
 import { VisualRulebookModal } from './components/VisualRulebookModal';
@@ -67,9 +68,21 @@ import {
   Warehouse,
 } from 'lucide-react';
 
+function getInitialEnableDepartments(): boolean {
+  try {
+    const saved = localStorage.getItem('hoyne_enable_departments');
+    if (saved !== null) return saved !== 'false';
+  } catch {}
+  return true;
+}
+
 function MainAppContent() {
   const [gameState, setGameState] = useState<GameState>(() =>
-    createInitialGameState({ playerCount: 4, humanCount: 1 })
+    createInitialGameState({
+      playerCount: 4,
+      humanCount: 1,
+      enableDepartments: getInitialEnableDepartments(),
+    })
   );
   const [inspectedPlayerIndex, setInspectedPlayerIndex] = useState<number>(0);
   useEffect(() => {
@@ -91,7 +104,7 @@ function MainAppContent() {
   // Setup Modal Form State
   const [setupPlayerCount, setSetupPlayerCount] = useState<number>(4);
   const [setupHumanCount, setSetupHumanCount] = useState<number>(1);
-  const [setupEnableDepartments, setSetupEnableDepartments] = useState<boolean>(true);
+  const [setupEnableDepartments, setSetupEnableDepartments] = useState<boolean>(getInitialEnableDepartments);
 
   const activePlayer = gameState.players[gameState.currentPlayerIndex];
   const isHumanTurn = !activePlayer.isAI && gameState.phase !== 'GAME_OVER';
@@ -162,6 +175,14 @@ function MainAppContent() {
       }
     }
   }, [gameState.phase, gameState.currentPlayerIndex, gameState.players]);
+
+    const handleToggleDepartments = useCallback((enabled: boolean) => {
+    try {
+      localStorage.setItem('hoyne_enable_departments', String(enabled));
+    } catch {}
+    setSetupEnableDepartments(enabled);
+    setGameState((prev) => toggleDepartmentsModule(prev, enabled));
+  }, []);
 
   const handleStartNewGame = useCallback(
     (playerCount: number, humanCount: number, enableDepartments?: boolean) => {
@@ -385,6 +406,7 @@ function MainAppContent() {
                 onRunMorningShift={handleRunMorningShift}
                 onDiscardToken={handleDiscardToken}
                 onOpenLocationsModal={() => setShowLocationsModal(true)}
+                onToggleDepartments={handleToggleDepartments}
               />
 
               {/* Public Bounties & Brewed Recipe Pile (5 Cards) */}
@@ -467,7 +489,7 @@ function MainAppContent() {
       =================================================================== */}
       {showSetupModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="stout-panel rounded-2xl max-w-lg w-full p-6 space-y-5 border-2 border-hoyne-copper shadow-2xl">
+          <div className="stout-panel rounded-2xl max-w-lg w-full p-6 space-y-4 border-2 border-hoyne-copper shadow-2xl">
             <div className="flex items-center justify-between border-b border-hoyne-copper/30 pb-3">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-hoyne-copper" />
@@ -481,6 +503,41 @@ function MainAppContent() {
                 className="text-stone-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* PROMINENT STARTUP MODULE SELECTOR: Personal Brewery Departments (#1–#10) */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/80 via-stone-900 to-amber-950/80 border-2 border-amber-500/70 shadow-xl flex items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span className="font-serif font-bold text-sm text-amber-200">
+                    Personal Brewery Departments (#1–#10)
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider ${setupEnableDepartments ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/60' : 'bg-stone-800 text-stone-400 border border-stone-700'}`}>
+                    {setupEnableDepartments ? 'Active' : 'Disabled (Standard)'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-stone-300 leading-snug">
+                  {setupEnableDepartments
+                    ? 'Enabled: Each player has a private department card docked to Zone 1 Warehouse with Tier 2 shift actions & storage buffers.'
+                    : 'Disabled: Standard base game rules. No private departments; workers place exclusively on Catwalks 1–7 and Central Pantry.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !setupEnableDepartments;
+                  setSetupEnableDepartments(next);
+                  try { localStorage.setItem('hoyne_enable_departments', String(next)); } catch {}
+                }}
+                className={`px-3.5 py-2 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer border shadow-lg ${
+                  setupEnableDepartments
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 border-amber-300 shadow-amber-500/20'
+                    : 'bg-stone-900 text-stone-400 border-stone-700'
+                }`}
+              >
+                {setupEnableDepartments ? 'Turn OFF' : 'Turn ON'}
               </button>
             </div>
 

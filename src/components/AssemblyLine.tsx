@@ -489,7 +489,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
           8-slot tuck system (4 Top Equipment, 4 Bottom Staff)
       =================================================================== */}
       <div
-        data-board-format="11.5x5.75-single-piece"
+        data-board-format="11.5x5-single-piece"
         className="rounded-3xl p-2.5 sm:p-3 lg:p-3.5 space-y-2.5 border-4 shadow-2xl relative select-none w-full"
         style={{
           backgroundColor: '#16100B',
@@ -547,7 +547,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
         <div className="w-full flex flex-col xl:flex-row items-center gap-3.5">
           {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse) */}
           {inspectedPlayer.departmentCard && (
-            <div className="shrink-0 flex flex-col justify-center items-center relative w-[128px] sm:w-[136px] xl:w-[144px]">
+            <div className="shrink-0 flex flex-col justify-center items-center relative w-[122px] sm:w-[130px] xl:w-[136px]">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="text-[10px] font-sans font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-amber-400" />
@@ -646,14 +646,14 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
                   The artwork takes up most of the space and is never cropped by future card slots!
               ============================================================= */}
               <div
-                data-player-mat="11.5x5.75-borderless-canvas"
-                className="w-full aspect-[11.5/5.75] min-h-[280px] sm:min-h-[310px] lg:min-h-[340px] flex flex-col justify-between rounded-2xl relative shadow-2xl border-2 border-amber-600/70 overflow-hidden bg-[#140E0A] z-10"
+                data-player-mat="11.5x5-borderless-canvas"
+                className="w-full aspect-[11.5/5] flex flex-col justify-between rounded-2xl relative shadow-2xl border-2 border-amber-600/70 overflow-hidden bg-[#140E0A] z-10"
               >
                 {/* THE SEAMLESS 5-ZONE PANORAMIC BREWERY MAT BACKGROUND */}
                 <img
                   src="/board/player-mat-panorama.jpg"
                   alt="Connected Brewery Floor Mat"
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none z-0"
+                  className="absolute inset-0 w-full h-full object-fill pointer-events-none select-none z-0"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     if (!target.dataset.triedRelative) {

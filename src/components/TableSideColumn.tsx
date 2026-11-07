@@ -40,6 +40,7 @@ export interface TableSideColumnProps {
   onRunMorningShift: () => void;
   onDiscardToken?: (taxonomy: IngredientTaxonomy) => void;
   onOpenLocationsModal?: () => void;
+  onToggleDepartments?: (enabled: boolean) => void;
   className?: string;
 }
 
@@ -68,6 +69,7 @@ export const TableSideColumn: React.FC<TableSideColumnProps> = ({
   onRunMorningShift,
   onDiscardToken,
   onOpenLocationsModal,
+  onToggleDepartments,
   className = "",
 }) => {
   const activePlayer = gameState.players[gameState.currentPlayerIndex];
@@ -350,7 +352,7 @@ export const TableSideColumn: React.FC<TableSideColumnProps> = ({
 
           {/* GAME CONTROLS */}
           <div className="stout-panel rounded-2xl p-2 border-hoyne-copper/40 shadow-md flex flex-col gap-1.5 text-xs">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <label className="flex-1 flex items-center gap-1.5 text-[10px] font-sans text-hoyne-cream/90 bg-stone-900/90 px-2 py-1 rounded-lg border border-hoyne-copper/30 cursor-pointer hover:border-amber-400/60 transition">
                 <input
                   type="checkbox"
@@ -360,6 +362,21 @@ export const TableSideColumn: React.FC<TableSideColumnProps> = ({
                 />
                 <span className="font-semibold">Auto AI</span>
               </label>
+
+              {onToggleDepartments && (
+                <label className="flex-1 flex items-center gap-1.5 text-[10px] font-sans text-hoyne-cream/90 bg-stone-900/90 px-2 py-1 rounded-lg border border-hoyne-copper/30 cursor-pointer hover:border-amber-400/60 transition" title="Toggle Personal Brewery Department Cards (#1–#10) on/off">
+                  <input
+                    type="checkbox"
+                    checked={gameState.enableDepartments !== false}
+                    onChange={(e) => onToggleDepartments(e.target.checked)}
+                    className="accent-amber-500 w-3 h-3 rounded"
+                  />
+                  <span className="font-semibold flex items-center gap-1 text-amber-300">
+                    <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                    <span>Depts</span>
+                  </span>
+                </label>
+              )}
 
               {activePlayer.isAI && gameState.phase !== 'GAME_OVER' && (
                 <div className="flex items-center gap-1 flex-1">

@@ -10,6 +10,7 @@ import {
   createTaproomDeck,
   createMixerPackDeck,
   createDepartmentDeck,
+  BREWERY_DEPARTMENT_DEFINITIONS,
   createInitialIngredientStations,
   INGREDIENT_STATION_METADATA,
   ROTARY_SLOT_DEFS,
@@ -6521,4 +6522,37 @@ export function performDepartmentAction(
   afterSlideState.shiftPhase = 'PHASE_2_CATWALK_PLACEMENT';
 
   return executePhase1MarketRefresh(afterSlideState);
+}
+
+export function toggleDepartmentsModule(state: GameState, enable?: boolean): GameState {
+  const nextEnable = enable !== undefined ? enable : !(state.enableDepartments !== false);
+  const nextPlayers = state.players.map((p, idx) => {
+    if (nextEnable) {
+      if (!p.departmentCard) {
+        const usedIds = new Set(state.players.map((pl) => pl.departmentCard?.id).filter(Boolean));
+        const available = BREWERY_DEPARTMENT_DEFINITIONS.filter((d) => !usedIds.has(d.id));
+        const card = available[idx % available.length] || BREWERY_DEPARTMENT_DEFINITIONS[idx % BREWERY_DEPARTMENT_DEFINITIONS.length];
+        return {
+          ...p,
+          departmentCard: card,
+          departmentOccupant: null,
+          lastOccupiedDepartment: false,
+        };
+      }
+      return p;
+    } else {
+      return {
+        ...p,
+        departmentCard: undefined,
+        departmentOccupant: null,
+        lastOccupiedDepartment: false,
+      };
+    }
+  });
+
+  return {
+    ...state,
+    players: nextPlayers,
+    enableDepartments: nextEnable,
+  };
 }

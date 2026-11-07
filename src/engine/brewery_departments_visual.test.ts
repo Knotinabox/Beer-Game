@@ -42,7 +42,7 @@ describe('Personal Brewery Departments Visual Verification', () => {
     console.log('Saved:', tableWithDeptPath);
 
     // Capture board with docked department card
-    const boardLocator = page.locator('[data-board-format="11.5x5.75-single-piece"]').first();
+    const boardLocator = page.locator('[data-board-format="11.5x5-single-piece"]').first();
     const boardWithDeptPath = path.join(ARTIFACT_DIR, 'board_with_department_card.png');
     await boardLocator.screenshot({ path: boardWithDeptPath });
     console.log('Saved:', boardWithDeptPath);
