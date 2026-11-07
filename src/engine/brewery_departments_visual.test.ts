@@ -53,6 +53,20 @@ describe('Personal Brewery Departments Visual Verification', () => {
       console.log('Saved Side B closeup:', cardSideBPath);
     }
 
+    // Capture tabletop at 1920x1080 (100% scaling)
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.waitForTimeout(400);
+    const table1080Path = path.join(ARTIFACT_DIR, 'tabletop_1080p.png');
+    await page.screenshot({ path: table1080Path });
+    console.log('Saved 1080p tabletop:', table1080Path);
+
+    // Capture tabletop at 1536x864 (125% scaling)
+    await page.setViewportSize({ width: 1536, height: 950 });
+    await page.waitForTimeout(400);
+    const table1536Path = path.join(ARTIFACT_DIR, 'tabletop_1536p.png');
+    await page.screenshot({ path: table1536Path });
+    console.log('Saved 1536p tabletop:', table1536Path);
+
     const tableWithDeptPath = path.join(ARTIFACT_DIR, 'tabletop_with_department_placed.png');
     await page.screenshot({ path: tableWithDeptPath });
     console.log('Saved:', tableWithDeptPath);

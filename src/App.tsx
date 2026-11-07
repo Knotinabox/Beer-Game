@@ -365,10 +365,10 @@ function MainAppContent() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full">
+        <div className="flex flex-col lg:flex-row items-stretch gap-3.5 sm:gap-4 w-full">
           {/* COLUMN 1 (LEFT): THE GAMEBOARD (Rotary Brewhouse Dial - Moved to Far Left) */}
-          <div className="w-full lg:w-[740px] xl:w-[800px] 2xl:w-[840px] shrink-0 flex flex-col">
-            <div className="stout-panel rounded-2xl p-2 sm:p-2.5 border-hoyne-copper/70 shadow-2xl w-full h-full flex flex-col justify-between">
+          <div className="w-full lg:w-[820px] xl:w-[880px] 2xl:w-[930px] shrink-0 flex flex-col">
+            <div className="stout-panel rounded-2xl p-2 sm:p-2.5 border-hoyne-copper/70 shadow-2xl w-full h-full flex flex-col justify-between overflow-visible">
               {gameState.rotaryBoard ? (
                 <RotaryBoard
                   gameState={gameState}
@@ -389,13 +389,13 @@ function MainAppContent() {
             </div>
           </div>
 
-          {/* COLUMN 2 (RIGHT): DASHBOARD, PUBLIC BOUNTIES & EXPANDED BREWERY BOARD */}
+          {/* COLUMN 2 (RIGHT): DASHBOARD, PUBLIC BOUNTIES & EXPANDED BREWERY BOARD (Pulled to the Right) */}
           <div className="flex-1 min-w-0 flex flex-col justify-between gap-2.5 h-full">
             {/* TOP RIGHT: Side Dashboard (Turn, Players, Reference, Controls) + Public Bounties */}
-            <div className="flex flex-col xl:flex-row items-stretch gap-2.5 w-full">
+            <div className="flex flex-col min-[1700px]:flex-row items-stretch gap-2.5 w-full">
               {/* Table Side Dashboard */}
               <TableSideColumn
-                className="w-full xl:w-[410px] 2xl:w-[440px] shrink-0"
+                className="w-full min-[1700px]:w-[365px] shrink-0"
                 gameState={gameState}
                 inspectedPlayerIndex={inspectedPlayerIndex}
                 onSelectPlayerIndex={setInspectedPlayerIndex}
@@ -456,7 +456,7 @@ function MainAppContent() {
                         ...(gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []),
                       ].map((r) => r.name)}
                       activePlayer={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
-                      compact={true}
+                      compact={false}
                     />
                   ))}
 

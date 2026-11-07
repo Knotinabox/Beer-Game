@@ -449,9 +449,9 @@ export const RotaryBoard: React.FC<RotaryBoardProps> = ({
           MAIN BOARD WRAPPER: CIRCULAR 11.500" DIAL WITH OVERHANGING CARDS
           Generous padding ensures upright poker cards in regular format never clip
           ===================================================================== */}
-      <div className="relative w-full max-w-[720px] xl:max-w-[760px] 2xl:max-w-[800px] mx-auto py-5 px-3 flex-1 flex items-center justify-center select-none overflow-visible">
+      <div className="relative w-full max-w-[820px] xl:max-w-[880px] 2xl:max-w-[930px] mx-auto py-5 px-3 sm:px-5 flex-1 flex items-center justify-center select-none overflow-visible">
         {/* Main 11.500" Circular Board Base — Expanded Prominent Scale */}
-        <div className="relative w-full aspect-square max-w-[440px] sm:max-w-[470px] lg:max-w-[500px] xl:max-w-[530px] 2xl:max-w-[560px] rounded-full">
+        <div className="relative w-full aspect-square max-w-[440px] sm:max-w-[470px] lg:max-w-[490px] xl:max-w-[520px] 2xl:max-w-[540px] rounded-full">
           {/* =================================================================
               LAYER 1: CENTRAL SVG ROTARY BREWHOUSE DIAL (R = 5.750")
               ================================================================= */}
