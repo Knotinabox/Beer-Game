@@ -165,7 +165,11 @@ export const TableSideColumn: React.FC<TableSideColumnProps> = ({
                       </span>
                     </div>
                     <p className="text-stone-200 text-[9.5px]">
-                      Click any <strong className="text-amber-300">Catwalk (1–7)</strong>, <strong className="text-amber-300">Center Pantry (#7)</strong>, or your <strong className="text-amber-300">Private Dept</strong> to place meeple.
+                      {gameState.enableDepartments !== false ? (
+                      <>Click any <strong className="text-amber-300">Catwalk (1–7)</strong>, <strong className="text-amber-300">Center Pantry (#7)</strong>, or your <strong className="text-amber-300">Private Dept</strong> to place meeple.</>
+                    ) : (
+                      <>Click any <strong className="text-amber-300">Catwalk (1–7)</strong> or the <strong className="text-amber-300">Center Pantry (#7)</strong> to place meeple.</>
+                    )}
                     </p>
                   </div>
                 )}

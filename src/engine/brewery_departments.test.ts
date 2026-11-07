@@ -232,4 +232,21 @@ describe('Personal Brewery Departments System (#1 - #10)', () => {
     expect(updatedP0.tokens.yeast).toBe(1);
     expect(updatedP0.tokens.hops).toBe(1);
   });
+
+  it('supports playing without personal brewery departments when enableDepartments is false', () => {
+    const state = createInitialGameState({ playerCount: 4, humanCount: 1, enableDepartments: false });
+    expect(state.enableDepartments).toBe(false);
+    expect(state.players).toHaveLength(4);
+
+    for (const player of state.players) {
+      expect(player.departmentCard).toBeUndefined();
+      expect(player.departmentOccupant).toBeNull();
+      expect(player.lastOccupiedDepartment).toBe(false);
+    }
+
+    // Catwalk placement works normally in base mode
+    expect(state.phase).toBe('PHASE_2_CATWALK_PLACEMENT');
+    const s1 = performCatwalkPlacement(state, 1, state.players[0].id);
+    expect(s1.rotaryBoard?.slots[1]?.catwalkOccupant?.playerId).toBe(state.players[0].id);
+  });
 });

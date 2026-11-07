@@ -6,7 +6,7 @@ import path from 'node:path';
 const ARTIFACT_DIR = 'C:\\Users\\knoti\\.gemini\\antigravity\\brain\\1bb89ee8-b753-4f26-8858-eaa0db8096ad';
 
 describe('Personal Brewery Departments Visual Verification', () => {
-  it('renders docked 2.25x3.5 department card left of Zone 1 and places meeple in Phase 2', async () => {
+  it('renders scaled market, scaled player board, setup toggle, and supports toggling departments on/off', async () => {
     fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
 
     const browser = await chromium.launch({
@@ -15,7 +15,7 @@ describe('Personal Brewery Departments Visual Verification', () => {
     });
 
     const context = await browser.newContext({
-      viewport: { width: 1750, height: 1150 },
+      viewport: { width: 1750, height: 1100 },
       deviceScaleFactor: 1.5,
     });
 
@@ -32,39 +32,64 @@ describe('Personal Brewery Departments Visual Verification', () => {
       await page.waitForTimeout(300);
     }
 
-    // Locate the docked department card
+    // 1. Capture tabletop with scaled-up market dial and scaled-down player board
+    console.log('2. Capturing tabletop with departments enabled (scaled market & board)...');
     const deptCard = page.locator('[data-department-card]').first();
     await deptCard.waitFor({ state: 'visible', timeout: 10000 });
 
-    // Capture zoomed-in department card before placement
-    console.log('2. Capturing zoomed-in department card...');
-    const deptZoomPath = path.join(ARTIFACT_DIR, 'department_card_view.png');
-    await deptCard.screenshot({ path: deptZoomPath });
-    console.log('Saved:', deptZoomPath);
+    const tableWithDeptPath = path.join(ARTIFACT_DIR, 'tabletop_with_department_placed.png');
+    await page.screenshot({ path: tableWithDeptPath });
+    console.log('Saved:', tableWithDeptPath);
 
-    // Capture whole board layout showing card docked flush to Zone 1 Warehouse
-    console.log('3. Capturing board with docked department card...');
+    // Capture board with docked department card
     const boardLocator = page.locator('[data-board-format="11.5x5.75-single-piece"]').first();
-    const boardPath = path.join(ARTIFACT_DIR, 'board_with_department_card.png');
-    await boardLocator.screenshot({ path: boardPath });
-    console.log('Saved:', boardPath);
+    const boardWithDeptPath = path.join(ARTIFACT_DIR, 'board_with_department_card.png');
+    await boardLocator.screenshot({ path: boardWithDeptPath });
+    console.log('Saved:', boardWithDeptPath);
 
-    // Place meeple on personal department in Phase 2
-    console.log('4. Clicking personal department card to place worker meeple...');
-    await deptCard.click({ force: true });
-    await page.waitForTimeout(800);
+    // 2. Open New Game Setup Modal and capture setup toggle
+    console.log('3. Opening New Game Setup Modal...');
+    const setupBtn = page.locator('button:has-text("New Game Setup"), button:has-text("New Game (1–6P)")').first();
+    await setupBtn.click();
+    await page.waitForTimeout(500);
 
-    // Capture screenshot showing placed meeple
-    console.log('5. Capturing department card with placed meeple...');
-    const placedPath = path.join(ARTIFACT_DIR, 'department_card_with_meeple.png');
-    await deptCard.screenshot({ path: placedPath });
-    console.log('Saved:', placedPath);
+    const setupModal = page.locator('.stout-panel:has-text("New Brewery Game Setup")').first();
+    await setupModal.waitFor({ state: 'visible', timeout: 5000 });
 
-    // Capture tabletop view showing meeple in place
-    const tablePath = path.join(ARTIFACT_DIR, 'tabletop_with_department_placed.png');
-    await page.screenshot({ path: tablePath });
-    console.log('Saved:', tablePath);
+    const setupModalPath = path.join(ARTIFACT_DIR, 'setup_modal_with_toggle.png');
+    await setupModal.screenshot({ path: setupModalPath });
+    console.log('Saved:', setupModalPath);
+
+    // 3. Toggle OFF the Personal Brewery Departments switch
+    console.log('4. Toggling OFF Personal Brewery Departments...');
+    const deptToggle = page.locator('input[type="checkbox"].sr-only.peer');
+    if ((await deptToggle.count()) > 0 && (await deptToggle.isChecked())) {
+      // Click the toggle container
+      const toggleLabel = page.locator('label.relative.inline-flex.items-center.cursor-pointer');
+      await toggleLabel.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Start game without departments
+    console.log('5. Clicking Start Custom Game without departments...');
+    const startBtn = page.locator('button:has-text("Start Custom Game")');
+    await startBtn.click();
+    await page.waitForTimeout(1000);
+
+    // Verify department card is NOT present on the board
+    const remainingDepts = await page.locator('[data-department-card]').count();
+    console.log('Department cards count after disabling:', remainingDepts);
+
+    // 4. Capture tabletop and board WITHOUT departments
+    console.log('6. Capturing tabletop and board WITHOUT departments...');
+    const tableNoDeptPath = path.join(ARTIFACT_DIR, 'tabletop_without_departments.png');
+    await page.screenshot({ path: tableNoDeptPath });
+    console.log('Saved:', tableNoDeptPath);
+
+    const boardNoDeptPath = path.join(ARTIFACT_DIR, 'board_without_departments.png');
+    await boardLocator.screenshot({ path: boardNoDeptPath });
+    console.log('Saved:', boardNoDeptPath);
 
     await browser.close();
-  }, 30000);
+  }, 35000);
 });

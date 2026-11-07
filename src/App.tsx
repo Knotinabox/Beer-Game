@@ -91,6 +91,7 @@ function MainAppContent() {
   // Setup Modal Form State
   const [setupPlayerCount, setSetupPlayerCount] = useState<number>(4);
   const [setupHumanCount, setSetupHumanCount] = useState<number>(1);
+  const [setupEnableDepartments, setSetupEnableDepartments] = useState<boolean>(true);
 
   const activePlayer = gameState.players[gameState.currentPlayerIndex];
   const isHumanTurn = !activePlayer.isAI && gameState.phase !== 'GAME_OVER';
@@ -163,17 +164,18 @@ function MainAppContent() {
   }, [gameState.phase, gameState.currentPlayerIndex, gameState.players]);
 
   const handleStartNewGame = useCallback(
-    (playerCount: number, humanCount: number) => {
+    (playerCount: number, humanCount: number, enableDepartments?: boolean) => {
       const nextState = createInitialGameState({
         playerCount,
         humanCount: Math.min(humanCount, playerCount),
+        enableDepartments: enableDepartments ?? setupEnableDepartments,
       });
       setGameState(nextState);
       setInspectedPlayerIndex(0);
       setShowSetupModal(false);
       setDismissedGameOver(false);
     },
-    []
+    [setupEnableDepartments]
   );
 
   const handleRunMorningShift = () => {
@@ -292,7 +294,7 @@ function MainAppContent() {
           RIGHT: The Brewery Board + Mixer Pack Bounties
           ZERO VERTICAL SCROLLING!
       =================================================================== */}
-      <main className="flex-1 max-w-[1920px] w-full mx-auto p-2 sm:p-3 overflow-hidden">
+      <main className="flex-1 w-full max-w-[2560px] mx-auto p-2 sm:p-3 overflow-hidden">
         {/* Final Round in Progress Banner (Rule 5: Equal Turns) */}
         {gameState.isFinalRound && gameState.phase !== 'GAME_OVER' && (
           <div className="mb-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-950/95 via-yellow-950/90 to-amber-950/95 border-2 border-amber-400 shadow-xl flex items-center justify-between gap-3 text-xs animate-pulse">
@@ -339,7 +341,7 @@ function MainAppContent() {
 
         <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full">
           {/* COLUMN 1 (LEFT): THE GAMEBOARD (Rotary Brewhouse Dial - Moved to Far Left) */}
-          <div className="w-full lg:w-[520px] xl:w-[550px] 2xl:w-[580px] shrink-0 flex flex-col">
+          <div className="w-full lg:w-[580px] xl:w-[620px] 2xl:w-[660px] shrink-0 flex flex-col">
             <div className="stout-panel rounded-2xl p-2 sm:p-2.5 border-hoyne-copper/70 shadow-2xl w-full h-full flex flex-col justify-between">
               {gameState.rotaryBoard ? (
                 <RotaryBoard
@@ -541,6 +543,29 @@ function MainAppContent() {
 
             {/* Custom Player Count & Human Seat Configuration */}
             <div className="space-y-3 pt-2 border-t border-hoyne-copper/25">
+              {/* Optional Personal Brewery Departments Toggle */}
+              <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 flex items-center justify-between gap-3 shadow-inner">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <span className="font-serif font-bold text-sm text-amber-200">
+                      Personal Brewery Departments (#1–#10)
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-hoyne-cream/70 leading-snug">
+                    Each player receives a unique private department card docked to Zone 1 Warehouse with Tier 2 shift actions and passive buffers.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={setupEnableDepartments}
+                    onChange={(e) => setSetupEnableDepartments(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-stone-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 shadow-sm"></div>
+                </label>
+              </div>
               <div>
                 <label className="block text-xs font-sans font-bold uppercase tracking-wider text-hoyne-cream/80 mb-1.5">
                   Total Players (1 to 6): {setupPlayerCount} Players (Endgame Target:{' '}

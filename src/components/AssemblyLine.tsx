@@ -490,7 +490,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
       =================================================================== */}
       <div
         data-board-format="11.5x5.75-single-piece"
-        className="rounded-3xl p-4 lg:p-5 space-y-4 border-4 shadow-2xl relative select-none w-full"
+        className="rounded-3xl p-2.5 sm:p-3 lg:p-3.5 space-y-2.5 border-4 shadow-2xl relative select-none w-full"
         style={{
           backgroundColor: '#16100B',
           backgroundImage: `
@@ -512,7 +512,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
             />
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="font-serif font-black text-xl text-amber-100 tracking-wide">
+                <h2 className="font-serif font-black text-base sm:text-lg text-amber-100 tracking-wide">
                   {inspectedPlayer.name}&apos;s Brewery Board
                 </h2>
                 {isActivePlayerInspected && (
@@ -547,7 +547,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
         <div className="w-full flex flex-col xl:flex-row items-center gap-3.5">
           {/* DOCKED PERSONAL BREWERY DEPARTMENT (2.25" x 3.5" Card flush to left of Zone 1 Warehouse) */}
           {inspectedPlayer.departmentCard && (
-            <div className="shrink-0 flex flex-col justify-center items-center relative w-[130px] sm:w-[140px] xl:w-[145px]">
+            <div className="shrink-0 flex flex-col justify-center items-center relative w-[116px] sm:w-[124px] xl:w-[130px]">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="text-[10px] font-sans font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-amber-400" />
@@ -647,7 +647,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
               ============================================================= */}
               <div
                 data-player-mat="11.5x5.75-borderless-canvas"
-                className="w-full aspect-[1024/430] min-h-[220px] sm:min-h-[250px] lg:min-h-[280px] flex flex-col justify-between rounded-2xl relative shadow-2xl border-2 border-amber-600/70 overflow-hidden bg-[#140E0A] z-10"
+                className="w-full aspect-[1024/420] min-h-[190px] sm:min-h-[210px] lg:min-h-[230px] max-h-[285px] flex flex-col justify-between rounded-2xl relative shadow-2xl border-2 border-amber-600/70 overflow-hidden bg-[#140E0A] z-10"
               >
                 {/* THE SEAMLESS 5-ZONE PANORAMIC BREWERY MAT BACKGROUND */}
                 <img

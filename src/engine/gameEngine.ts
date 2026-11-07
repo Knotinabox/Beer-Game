@@ -840,6 +840,7 @@ export function createInitialGameState(config: {
   humanCount?: number;
   playerNames?: string[];
   seed?: number;
+  enableDepartments?: boolean;
 }): GameState {
   const playerCount = Math.max(1, Math.min(6, config.playerCount));
   const humanCount = config.humanCount ?? 1;
@@ -1018,12 +1019,21 @@ export function createInitialGameState(config: {
   const mixerDeck: MixerPackCard[] = allMixerCards;
   const mixerDiscard: MixerPackCard[] = [];
 
-  // Deck 4: 10-Card Brewery Department Deck (Deal 1 unique department to each player)
+  // Deck 4: 10-Card Brewery Department Deck (Deal 1 unique department to each player if module enabled)
+  const enableDepartments = config.enableDepartments !== false;
   let departmentDeck = shuffleArray(createDepartmentDeck(), rng);
   const departmentDiscard: BreweryDepartmentCard[] = [];
-  for (let pIdx = 0; pIdx < players.length; pIdx++) {
-    if (departmentDeck.length > 0) {
-      players[pIdx].departmentCard = departmentDeck.shift()!;
+  if (enableDepartments) {
+    for (let pIdx = 0; pIdx < players.length; pIdx++) {
+      if (departmentDeck.length > 0) {
+        players[pIdx].departmentCard = departmentDeck.shift()!;
+        players[pIdx].departmentOccupant = null;
+        players[pIdx].lastOccupiedDepartment = false;
+      }
+    }
+  } else {
+    for (let pIdx = 0; pIdx < players.length; pIdx++) {
+      players[pIdx].departmentCard = undefined;
       players[pIdx].departmentOccupant = null;
       players[pIdx].lastOccupiedDepartment = false;
     }
@@ -1054,6 +1064,7 @@ export function createInitialGameState(config: {
     mixerDiscard,
     departmentDeck,
     departmentDiscard,
+    enableDepartments,
     lastMixerClaimEvent: null,
     recipeDeck,
     recipeDiscard,

@@ -601,6 +601,7 @@ export interface GameState {
   // Deck 4: Personal Brewery Department Deck (10 Cards)
   departmentDeck?: BreweryDepartmentCard[];
   departmentDiscard?: BreweryDepartmentCard[];
+  enableDepartments?: boolean;
   lastMixerClaimEvent?: {
     playerId: string;
     playerName: string;
