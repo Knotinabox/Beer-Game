@@ -37,19 +37,18 @@ describe('Personal Brewery Departments Visual Verification', () => {
     const initialDeptCount = await page.locator('[data-department-card]').count();
     console.log('Initial department cards count (expected 0):', initialDeptCount);
 
-    // Capture default tabletop at 1920x1080 with landscape bounties and 20% scaled-down board
+    // Capture default tabletop at 1920x1080 with 2.25x3.5 bounties and centered board
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.waitForTimeout(400);
     const table1080Path = path.join(ARTIFACT_DIR, 'tabletop_1080p.png');
     await page.screenshot({ path: table1080Path });
     console.log('Saved 1080p tabletop:', table1080Path);
 
-    // Capture default tabletop at 1536x950
-    await page.setViewportSize({ width: 1536, height: 950 });
-    await page.waitForTimeout(400);
-    const table1536Path = path.join(ARTIFACT_DIR, 'tabletop_1536p.png');
-    await page.screenshot({ path: table1536Path });
-    console.log('Saved 1536p tabletop:', table1536Path);
+    // Capture board without departments at 1080p
+    const boardLocator = page.locator('[data-board-format="11.5x5-single-piece"]').first();
+    const boardNoDeptPath = path.join(ARTIFACT_DIR, 'board_without_departments.png');
+    await boardLocator.screenshot({ path: boardNoDeptPath });
+    console.log('Saved:', boardNoDeptPath);
 
     // 2. Toggle ON the optional Personal Departments module to test expansion mode
     console.log('3. Toggling ON optional Personal Departments module...');
@@ -83,7 +82,6 @@ describe('Personal Brewery Departments Visual Verification', () => {
     console.log('Saved:', tableWithDeptPath);
 
     // Capture board with docked department card
-    const boardLocator = page.locator('[data-board-format="11.5x5-single-piece"]').first();
     const boardWithDeptPath = path.join(ARTIFACT_DIR, 'board_with_department_card.png');
     await boardLocator.screenshot({ path: boardWithDeptPath });
     console.log('Saved:', boardWithDeptPath);
@@ -127,7 +125,6 @@ describe('Personal Brewery Departments Visual Verification', () => {
     await page.screenshot({ path: tableNoDeptPath });
     console.log('Saved:', tableNoDeptPath);
 
-    const boardNoDeptPath = path.join(ARTIFACT_DIR, 'board_without_departments.png');
     await boardLocator.screenshot({ path: boardNoDeptPath });
     console.log('Saved:', boardNoDeptPath);
 

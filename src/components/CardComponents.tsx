@@ -2916,7 +2916,7 @@ export const MixerPackCardView: React.FC<MixerPackCardViewProps> = ({
   activePlayer,
   compact = false,
   disableInspectTrigger = false,
-  layoutVariant = 'landscape',
+  layoutVariant = 'portrait',
 }) => {
   const isClaimed = Boolean(card.claimedByPlayerId);
   const { inspectCard, setHoveredCard } = useCardInspector();
@@ -3194,7 +3194,7 @@ export const MixerPackCardView: React.FC<MixerPackCardViewProps> = ({
           : isReadyToClaim
           ? 'bg-gradient-to-br from-[#24170D] via-[#1E120A] to-[#120B07] border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.55)] ring-2 ring-amber-400'
           : 'bg-gradient-to-br from-[#1A120B] via-[#160E08] to-[#0E0A07] border-amber-600/50 hover:border-amber-400/90 shadow-xl'
-      } ${compact ? 'p-2 w-full text-xs' : 'p-2 sm:p-2.5 w-full min-h-[220px]'}`}
+      } ${compact ? 'p-1.5 w-full text-xs' : 'p-1.5 sm:p-2 w-full h-full aspect-[2.25/3.5]'}`}
       style={{
         boxShadow: isReadyToClaim
           ? '0 14px 32px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(254, 240, 138, 0.3)'
@@ -3216,7 +3216,7 @@ export const MixerPackCardView: React.FC<MixerPackCardViewProps> = ({
       =================================================================== */}
       <div className="relative z-10 pb-1 border-b border-amber-900/40">
         <div className="flex items-center justify-between gap-1 mb-0.5">
-          <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 border border-amber-400/40 text-[8.5px] font-mono font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+          <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 border border-amber-400/40 text-[8px] font-mono font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
             <Package className="w-2.5 h-2.5 text-amber-400" />
             <span>Bounty</span>
           </span>
@@ -3230,13 +3230,13 @@ export const MixerPackCardView: React.FC<MixerPackCardViewProps> = ({
             }}
           >
             <Trophy className="w-2.5 h-2.5 text-stone-950 fill-stone-950 shrink-0" />
-            <span className="font-serif font-black text-[11px] text-stone-950 tracking-wider whitespace-nowrap">
+            <span className="font-serif font-black text-[10px] text-stone-950 tracking-wider whitespace-nowrap">
               +{card.vp} VP
             </span>
           </div>
         </div>
 
-        <h3 className="font-serif font-black text-xs sm:text-[13px] text-amber-100 tracking-wide truncate drop-shadow-sm group-hover:text-amber-200 transition-colors">
+        <h3 className="font-serif font-black text-xs text-amber-100 tracking-wide truncate drop-shadow-sm group-hover:text-amber-200 transition-colors">
           {card.name}
         </h3>
       </div>
@@ -3244,7 +3244,7 @@ export const MixerPackCardView: React.FC<MixerPackCardViewProps> = ({
       {/* ===================================================================
           2. DOMINANT HERO ART CANVAS: Authentic 3D Hoyne Mixer Pack Packaging
       =================================================================== */}
-      <div className="my-1.5 relative z-10 w-full h-[110px] sm:h-[120px] rounded-xl overflow-hidden bg-gradient-to-b from-black/60 via-[#18110B]/80 to-black/85 border border-amber-900/50 flex items-center justify-center shadow-inner group/art">
+      <div className="my-1 relative z-10 w-full flex-1 min-h-0 rounded-xl overflow-hidden bg-gradient-to-b from-black/60 via-[#18110B]/80 to-black/85 border border-amber-900/50 flex items-center justify-center shadow-inner group/art">
         {/* Ambient radial backlight glow behind the box */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none transition-opacity duration-300 group-hover/art:opacity-75"

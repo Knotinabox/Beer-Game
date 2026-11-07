@@ -526,7 +526,7 @@ function MainAppContent() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row items-stretch gap-3.5 sm:gap-4 w-full">
+        <div className="flex flex-col lg:flex-row items-stretch gap-2.5 sm:gap-3 w-full">
           {/* COLUMN 1 (LEFT): THE GAMEBOARD (Rotary Brewhouse Dial - Moved to Far Left) */}
           <div className="w-full lg:w-[820px] xl:w-[880px] 2xl:w-[930px] shrink-0 flex flex-col">
             <div className="stout-panel rounded-2xl p-2 sm:p-2.5 border-hoyne-copper/70 shadow-2xl w-full h-full flex flex-col justify-between overflow-visible">
@@ -576,17 +576,17 @@ function MainAppContent() {
                 onToggleDepartments={handleToggleDepartments}
               />
 
-              {/* Public Bounties & Brewed Recipe Pile (5 Cards) */}
+              {/* Public Bounties (4 Cards in Authentic 2.25" x 3.5" Format) */}
               <div className="flex-1 min-w-0 stout-panel rounded-2xl p-2.5 border-2 border-amber-500/70 shadow-2xl bg-gradient-to-br from-[#1C130B] via-[#160E08] to-[#0D0805] flex flex-col justify-between">
                 {/* Unified Header */}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hoyne-copper/30 pb-2">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/50 text-amber-300 text-[10px] font-display font-black uppercase tracking-wider flex items-center gap-1">
                       <Trophy className="w-3 h-3 text-amber-400" />
-                      <span>Public Bounties &amp; Trophy Pile</span>
+                      <span>Public Bounties</span>
                     </span>
                     <h2 className="font-display font-bold text-sm text-hoyne-cream flex items-center gap-2 tracking-wide">
-                      Mixer Pack Bounties (4) &amp; Brewed Recipe Pile (1)
+                      Mixer Pack Bounties (4 Available)
                     </h2>
                   </div>
 
@@ -597,46 +597,31 @@ function MainAppContent() {
                         {gameState.mixerDeck?.length ?? 0} in Deck
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/50 rounded-xl px-2.5 py-1 shadow-inner">
-                      <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-xs font-mono font-bold text-emerald-300">
-                        {((gameState.players[inspectedPlayerIndex]?.completedBatches || []).length + (gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []).length)}/{gameState.targetBatchesToTriggerEnd} Batches
-                      </span>
-                    </div>
                   </div>
                 </div>
 
-                {/* 5 Cards Row (All 5 in Landscape Mode: 4 Mixer Pack Bounties + 1 Brewed Recipe Pile) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 min-[2200px]:grid-cols-5 gap-2.5 items-stretch w-full mt-2">
-                  {/* 4 Active Mixer Pack Offers in Landscape Mode */}
+                {/* 4 Cards in 2.25" x 3.5" Format */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 items-center justify-items-center w-full mt-2">
                   {(gameState.mixerMarket || []).slice(0, 4).map((mixerCard) => (
-                    <MixerPackCardView
-                      key={mixerCard.id}
-                      card={mixerCard}
-                      completedRecipeNames={[
-                        ...(gameState.players[inspectedPlayerIndex]?.completedBatches || []),
-                        ...(gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []),
-                      ].map((r) => r.name)}
-                      activePlayer={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
-                      layoutVariant="landscape"
-                    />
+                    <div key={mixerCard.id} className="w-full max-w-[130px] aspect-[2.25/3.5] flex">
+                      <MixerPackCardView
+                        card={mixerCard}
+                        completedRecipeNames={[
+                          ...(gameState.players[inspectedPlayerIndex]?.completedBatches || []),
+                          ...(gameState.players[inspectedPlayerIndex]?.zones[5]?.recipes || []),
+                        ].map((r) => r.name)}
+                        activePlayer={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
+                        layoutVariant="portrait"
+                      />
+                    </div>
                   ))}
-
-                  {/* 5th Card: Brewed Recipe Pile (Delivered Beers Stack in Landscape Mode) */}
-                  <div className="col-span-1 sm:col-span-2 min-[2200px]:col-span-1">
-                    <BrewedRecipePileCard
-                      player={gameState.players[inspectedPlayerIndex] || gameState.players[0]}
-                      targetBatches={gameState.targetBatchesToTriggerEnd}
-                      layoutVariant="landscape"
-                    />
-                  </div>
                 </div>
               </div>
             </div>
 
-            {/* BOTTOM RIGHT: THE BREWERY (5-Zone Assembly Line - Shrunk in scale by 20%) */}
-            <div className="w-full flex justify-center 2xl:justify-end">
-              <div className="w-full max-w-[80%]">
+            {/* BOTTOM RIGHT: THE BREWERY (Centered with Delivered Brew Pile on Right) */}
+            <div className="w-full flex justify-center">
+              <div className="w-full max-w-[94%]">
                 <AssemblyLine
                   gameState={gameState}
                   inspectedPlayerIndex={inspectedPlayerIndex}

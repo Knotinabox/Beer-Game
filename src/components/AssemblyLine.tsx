@@ -24,6 +24,7 @@ import {
 } from './CardComponents';
 import { WOODEN_TOKEN_COLORS } from './WoodenTokens';
 import { DepartmentCardView } from './DepartmentCardView';
+import { BrewedRecipePileCard } from './TrophyRack';
 import { DepartmentActionPayload } from '../engine/gameEngine';
 import {
   Warehouse,
@@ -700,11 +701,11 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
                         className="flex flex-col justify-between w-full relative px-1.5 py-1 min-w-0"
                       >
                         {/* Top Zone Canonical Header Badge directly on board */}
-                        <div className="w-full flex justify-center mb-1.5 shrink-0 z-20">
+                        <div className="w-full flex justify-center mb-1 shrink-0 z-20">
                           <button
                             type="button"
                             onClick={() => onInspectZone && onInspectZone(zoneId)}
-                            className="px-2.5 py-1 rounded-lg backdrop-blur-sm border font-display font-black tracking-wider text-[9px] sm:text-[10px] uppercase shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5"
+                            className="max-w-full px-1.5 py-0.5 rounded-lg backdrop-blur-sm border font-display font-black tracking-wider text-[7.5px] sm:text-[9px] uppercase shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center gap-1 truncate"
                             style={{
                               backgroundColor: ZONE_THEMES[zoneId].badgeBg,
                               borderColor: ZONE_THEMES[zoneId].badgeBorder,
@@ -714,7 +715,7 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
                             title={`Inspect ${ZONE_THEMES[zoneId].name} (Click to view details & upgrades)`}
                           >
                             {ZONE_ICONS[zoneId]}
-                            <span>{ZONE_THEMES[zoneId].name}</span>
+                            <span className="truncate">{ZONE_THEMES[zoneId].shortName || ZONE_THEMES[zoneId].name}</span>
                           </button>
                         </div>
                         {/* STATION MAIN CANVAS CONTENT */}
@@ -932,6 +933,26 @@ export const AssemblyLine: React.FC<AssemblyLineProps> = ({
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* DOCKED DELIVERED BREWS PILE (2.25" x 3.5" Card flush to right of Zone 5 Packaging) */}
+            <div className="shrink-0 flex flex-col justify-center items-center relative w-[84px] sm:w-[88px] xl:w-[92px]">
+              <div className="relative w-full aspect-[2.25/3.5]">
+                <BrewedRecipePileCard
+                  player={inspectedPlayer}
+                  targetBatches={gameState.targetBatchesToTriggerEnd}
+                  layoutVariant="portrait"
+                />
+                {/* Visual Outfeed Conveyor Bracket joining Zone 5 to Delivered Brew Pile */}
+                <div
+                  className="hidden xl:flex absolute -left-2 top-1/2 -translate-y-1/2 z-30 flex-col items-center gap-0.5"
+                  title="Industrial Outfeed Conveyor: Completed batches slide off Zone 5 Packaging into your Delivered Brew Pile"
+                >
+                  <div className="w-3 h-5 bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 rounded-sm border border-emerald-300/80 shadow-lg flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-stone-900 border border-emerald-300" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
